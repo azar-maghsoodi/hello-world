@@ -107,21 +107,40 @@ admin and visit `/admin` for the admin panel.
   snapshot so order history stays intact even if the product is later
   edited or deleted (`product_id` is nullable and set null on delete).
 
+## Customer account pages
+
+Logged-in customers get, from the "My orders" / name links in the header:
+
+- `/profile` — edit their name, email, and profile details (phone, date of
+  birth, bio, address).
+- `/orders` — their own order history (paginated).
+- `/orders/{order}` — a single order's line items and totals. Viewing
+  another user's order returns a 403.
+
+## Admin panel pages
+
+- `/admin/orders` — every order, filterable by status.
+- `/admin/orders/{order}` — an order's line items, totals, and a status
+  selector (pending/processing/completed/cancelled).
+
 ## How it fits together
 
 - `routes/web.php` — public storefront routes, `guest`-only auth routes,
-  and the `admin`-only route group.
+  `auth`-only account routes (profile, orders), and the `admin`-only route
+  group.
 - `app/Http/Controllers/Shop/*` — storefront controllers (home, category,
-  product pages).
+  product pages) plus the customer's own profile and order controllers.
 - `app/Http/Controllers/Auth/*` — registration and session (login/logout)
   controllers.
 - `app/Http/Controllers/Admin/*` — admin CRUD controllers for categories,
-  products, attributes, and user role management.
-- `app/Models/{Category,Product,ProductAttribute,User}.php` — Eloquent
-  models and their relationships.
-- `resources/js/Pages/Shop/*` — storefront Vue pages.
+  products, attributes, orders, and user role management.
+- `app/Models/{Category,Product,ProductAttribute,User,Profile,SalesOrder,SalesOrderItem}.php`
+  — Eloquent models and their relationships.
+- `resources/js/Pages/Shop/*` — storefront + account Vue pages (including
+  `Shop/Orders/*`).
 - `resources/js/Pages/Auth/*` — login/register Vue pages.
-- `resources/js/Pages/Admin/*` — admin panel Vue pages.
+- `resources/js/Pages/Admin/*` — admin panel Vue pages (including
+  `Admin/Orders/*`).
 - `resources/js/Layouts/{ShopLayout,AdminLayout}.vue` — the two page shells.
 - `app/Http/Controllers/TaskController.php`, `resources/js/Pages/Tasks/Index.vue`
   — the original Tasks demo, still available at `/tasks`.

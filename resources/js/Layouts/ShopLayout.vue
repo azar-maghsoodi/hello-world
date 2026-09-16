@@ -23,7 +23,8 @@ const logout = () => {
                         <Link v-if="user.role === 'admin'" href="/admin" class="text-gray-600 hover:text-gray-900">
                             Admin panel
                         </Link>
-                        <span class="text-gray-500">{{ user.name }}</span>
+                        <Link href="/orders" class="text-gray-600 hover:text-gray-900">My orders</Link>
+                        <Link href="/profile" class="text-gray-600 hover:text-gray-900">{{ user.name }}</Link>
                         <button type="button" class="text-gray-600 hover:text-gray-900" @click="logout">
                             Log out
                         </button>

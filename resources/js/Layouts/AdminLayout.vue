@@ -12,6 +12,7 @@ const navigation = [
     { name: 'Categories', href: '/admin/categories', routeName: 'admin.categories.index' },
     { name: 'Products', href: '/admin/products', routeName: 'admin.products.index' },
     { name: 'Attributes', href: '/admin/attributes', routeName: 'admin.attributes.index' },
+    { name: 'Orders', href: '/admin/orders', routeName: 'admin.orders.index' },
     { name: 'Users', href: '/admin/users', routeName: 'admin.users.index' },
 ];
 
