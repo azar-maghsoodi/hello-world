@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useCurrency } from '@/utils/currency';
 
 defineOptions({ layout: AdminLayout });
 
@@ -10,6 +11,8 @@ const props = defineProps({
     filters: { type: Object, default: () => ({}) },
     statuses: { type: Array, default: () => [] },
 });
+
+const money = useCurrency();
 
 const statusClasses = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -78,7 +81,7 @@ const filterByStatus = (status) => {
                             {{ order.status }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-gray-900">${{ order.total }}</td>
+                    <td class="px-4 py-3 text-gray-900">{{ money(order.total) }}</td>
                     <td class="px-4 py-3 text-right">
                         <Link :href="`/admin/orders/${order.id}`" class="text-gray-600 hover:text-gray-900">
                             View

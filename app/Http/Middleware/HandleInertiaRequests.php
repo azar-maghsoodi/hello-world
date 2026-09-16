@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Language;
+use App\Models\StoreSetting;
 use App\Services\Cart;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,6 +50,20 @@ class HandleInertiaRequests extends Middleware
             'cart' => [
                 'count' => fn () => app(Cart::class)->count(),
             ],
+            'locale' => app()->getLocale(),
+            'languages' => fn () => Language::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['code', 'name', 'native_name']),
+            'currency' => function () {
+                $settings = StoreSetting::current();
+
+                return [
+                    'code' => $settings->currency_code,
+                    'symbol' => $settings->currency_symbol,
+                ];
+            },
         ];
     }
 }

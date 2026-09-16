@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useCurrency } from '@/utils/currency';
 
 defineOptions({ layout: AdminLayout });
 
@@ -10,6 +11,7 @@ const props = defineProps({
     statuses: { type: Array, default: () => [] },
 });
 
+const money = useCurrency();
 const statusForm = useForm({ status: props.order.status });
 
 const updateStatus = () => {
@@ -74,8 +76,8 @@ const updateStatus = () => {
                     </td>
                     <td class="px-4 py-3 text-gray-500">{{ item.product_sku }}</td>
                     <td class="px-4 py-3 text-gray-500">{{ item.quantity }}</td>
-                    <td class="px-4 py-3 text-gray-500">${{ item.unit_price }}</td>
-                    <td class="px-4 py-3 text-gray-900">${{ item.total }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ money(item.unit_price) }}</td>
+                    <td class="px-4 py-3 text-gray-900">{{ money(item.total) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -84,19 +86,19 @@ const updateStatus = () => {
     <div class="mt-6 ml-auto max-w-xs space-y-1 text-sm">
         <div class="flex justify-between text-gray-600">
             <span>Subtotal</span>
-            <span>${{ order.subtotal }}</span>
+            <span>{{ money(order.subtotal) }}</span>
         </div>
         <div class="flex justify-between text-gray-600">
             <span>Tax</span>
-            <span>${{ order.tax }}</span>
+            <span>{{ money(order.tax) }}</span>
         </div>
         <div class="flex justify-between text-gray-600">
             <span>Shipping</span>
-            <span>${{ order.shipping_cost }}</span>
+            <span>{{ money(order.shipping_cost) }}</span>
         </div>
         <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
             <span>Total</span>
-            <span>${{ order.total }}</span>
+            <span>{{ money(order.total) }}</span>
         </div>
     </div>
 

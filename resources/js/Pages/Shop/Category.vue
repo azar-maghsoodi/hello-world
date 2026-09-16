@@ -1,6 +1,8 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useTranslations } from '@/i18n';
+import { useCurrency } from '@/utils/currency';
 
 defineOptions({ layout: ShopLayout });
 
@@ -8,13 +10,16 @@ const props = defineProps({
     category: { type: Object, required: true },
     products: { type: Object, required: true },
 });
+
+const t = useTranslations();
+const money = useCurrency();
 </script>
 
 <template>
     <Head :title="category.name" />
 
     <nav class="mb-4 text-sm text-gray-500">
-        <Link href="/" class="hover:text-gray-800">Shop</Link>
+        <Link href="/" class="hover:text-gray-800">{{ t('breadcrumb.shop') }}</Link>
         <span class="mx-1">/</span>
         <Link v-if="category.parent" :href="`/categories/${category.parent.slug}`" class="hover:text-gray-800">
             {{ category.parent.name }}
@@ -45,10 +50,10 @@ const props = defineProps({
             class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-400"
         >
             <p class="font-medium text-gray-900">{{ product.name }}</p>
-            <p class="mt-1 text-sm text-gray-500">${{ product.sale_price ?? product.price }}</p>
+            <p class="mt-1 text-sm text-gray-500">{{ money(product.sale_price ?? product.price) }}</p>
         </Link>
     </div>
-    <p v-else class="text-sm text-gray-500">No products in this category yet.</p>
+    <p v-else class="text-sm text-gray-500">{{ t('category.noProducts') }}</p>
 
     <div v-if="products.links?.length > 3" class="mt-8 flex flex-wrap gap-1">
         <Link

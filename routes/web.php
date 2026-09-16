@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\LanguageController as AdminLanguageController;
 use App\Http\Controllers\Admin\ProductAttributeController as AdminProductAttributeController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SalesOrderController as AdminSalesOrderController;
+use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -12,6 +14,7 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CategoryController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\LocaleController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\ProductController;
 use App\Http\Controllers\Shop\ProfileController;
@@ -29,6 +32,8 @@ Route::get('cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('cart', [CartController::class, 'store'])->name('cart.store');
 Route::patch('cart/{product}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
+
+Route::put('locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
@@ -68,4 +73,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::resource('orders', AdminSalesOrderController::class)
         ->only(['index', 'show', 'update']);
+
+    Route::resource('languages', AdminLanguageController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
+    Route::put('settings', [AdminSettingController::class, 'update'])->name('settings.update');
 });

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\SalesOrder;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -27,6 +28,8 @@ class CheckoutTest extends TestCase
 
     public function test_a_user_can_place_an_order_from_their_cart(): void
     {
+        StoreSetting::current()->update(['tax_rate' => 0.08, 'shipping_cost' => 5]);
+
         $user = User::factory()->create();
         $product = Product::factory()->create(['price' => 50, 'sale_price' => null, 'quantity' => 10]);
 
@@ -45,9 +48,24 @@ class CheckoutTest extends TestCase
         $this->assertEquals(100, $item->total);
         $this->assertEquals(100, $order->subtotal);
         $this->assertEquals(8, $order->tax);
-        $this->assertEquals(108, $order->total);
+        $this->assertEquals(5, $order->shipping_cost);
+        $this->assertEquals(113, $order->total);
 
         $this->assertSame(8, $product->fresh()->quantity);
+    }
+
+    public function test_checkout_uses_zero_tax_and_shipping_by_default(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 20, 'sale_price' => null, 'quantity' => 10]);
+
+        $this->actingAs($user)->post('/cart', ['product_id' => $product->id, 'quantity' => 1]);
+        $this->actingAs($user)->post('/checkout', ['shipping_address' => 'Somewhere']);
+
+        $order = SalesOrder::where('user_id', $user->id)->firstOrFail();
+        $this->assertEquals(0, $order->tax);
+        $this->assertEquals(0, $order->shipping_cost);
+        $this->assertEquals(20, $order->total);
     }
 
     public function test_placing_an_order_clears_the_cart(): void

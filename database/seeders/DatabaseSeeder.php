@@ -3,10 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\Language;
 use App\Models\Product;
 use App\Models\ProductAttribute;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -20,6 +22,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        StoreSetting::create([
+            'currency_code' => 'EUR',
+            'currency_symbol' => '€',
+            'tax_rate' => 0,
+            'shipping_cost' => 0,
+        ]);
+
+        collect([
+            ['code' => 'en', 'name' => 'English', 'native_name' => 'English', 'is_default' => true, 'sort_order' => 0],
+            ['code' => 'fr', 'name' => 'French', 'native_name' => 'Français', 'is_default' => false, 'sort_order' => 1],
+            ['code' => 'de', 'name' => 'German', 'native_name' => 'Deutsch', 'is_default' => false, 'sort_order' => 2],
+            ['code' => 'es', 'name' => 'Spanish', 'native_name' => 'Español', 'is_default' => false, 'sort_order' => 3],
+            ['code' => 'it', 'name' => 'Italian', 'native_name' => 'Italiano', 'is_default' => false, 'sort_order' => 4],
+        ])->each(fn (array $language) => Language::create([...$language, 'is_active' => true]));
+
         $admin = User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
@@ -98,10 +115,13 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
 
+            $taxRate = (float) StoreSetting::current()->tax_rate;
+            $tax = round($subtotal * $taxRate, 2);
+
             $order->update([
                 'subtotal' => $subtotal,
-                'tax' => round($subtotal * 0.08, 2),
-                'total' => $subtotal + round($subtotal * 0.08, 2),
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
             ]);
         });
     }

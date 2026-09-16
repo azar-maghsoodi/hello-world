@@ -2,8 +2,11 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useTranslations } from '@/i18n';
 
 defineOptions({ layout: ShopLayout });
+
+const t = useTranslations();
 
 const form = useForm({
     email: '',
@@ -19,14 +22,14 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Log in" />
+    <Head :title="t('auth.logIn')" />
 
     <div class="mx-auto max-w-sm">
-        <h1 class="mb-6 text-2xl font-semibold text-gray-900">Log in</h1>
+        <h1 class="mb-6 text-2xl font-semibold text-gray-900">{{ t('auth.logIn') }}</h1>
 
         <form @submit.prevent="submit" class="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="email">Email</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="email">{{ t('auth.email') }}</label>
                 <input
                     id="email"
                     v-model="form.email"
@@ -39,7 +42,9 @@ const submit = () => {
             </div>
 
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="password">Password</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="password">
+                    {{ t('auth.password') }}
+                </label>
                 <input
                     id="password"
                     v-model="form.password"
@@ -52,7 +57,7 @@ const submit = () => {
 
             <label class="flex items-center gap-2 text-sm text-gray-600">
                 <input v-model="form.remember" type="checkbox" class="rounded border-gray-300">
-                Remember me
+                {{ t('auth.rememberMe') }}
             </label>
 
             <button
@@ -60,13 +65,13 @@ const submit = () => {
                 :disabled="form.processing"
                 class="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
             >
-                Log in
+                {{ t('auth.logIn') }}
             </button>
         </form>
 
         <p class="mt-4 text-sm text-gray-600">
-            Don't have an account?
-            <Link href="/register" class="text-gray-900 underline">Sign up</Link>
+            {{ t('auth.noAccount') }}
+            <Link href="/register" class="text-gray-900 underline">{{ t('auth.signUp') }}</Link>
         </p>
     </div>
 </template>

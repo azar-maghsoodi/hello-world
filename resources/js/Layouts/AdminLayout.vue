@@ -14,6 +14,8 @@ const navigation = [
     { name: 'Attributes', href: '/admin/attributes', routeName: 'admin.attributes.index' },
     { name: 'Orders', href: '/admin/orders', routeName: 'admin.orders.index' },
     { name: 'Users', href: '/admin/users', routeName: 'admin.users.index' },
+    { name: 'Languages', href: '/admin/languages', routeName: 'admin.languages.index' },
+    { name: 'Settings', href: '/admin/settings', routeName: 'admin.settings.edit' },
 ];
 
 const isCurrent = (routeName) => route().current(routeName) || route().current(`${routeName.replace('.index', '')}.*`);

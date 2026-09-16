@@ -2,8 +2,11 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useTranslations } from '@/i18n';
 
 defineOptions({ layout: ShopLayout });
+
+const t = useTranslations();
 
 const form = useForm({
     name: '',
@@ -20,14 +23,14 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Sign up" />
+    <Head :title="t('auth.signUp')" />
 
     <div class="mx-auto max-w-sm">
-        <h1 class="mb-6 text-2xl font-semibold text-gray-900">Create an account</h1>
+        <h1 class="mb-6 text-2xl font-semibold text-gray-900">{{ t('auth.createAccount') }}</h1>
 
         <form @submit.prevent="submit" class="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="name">Name</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="name">{{ t('auth.name') }}</label>
                 <input
                     id="name"
                     v-model="form.name"
@@ -40,7 +43,7 @@ const submit = () => {
             </div>
 
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="email">Email</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="email">{{ t('auth.email') }}</label>
                 <input
                     id="email"
                     v-model="form.email"
@@ -52,7 +55,9 @@ const submit = () => {
             </div>
 
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="password">Password</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="password">
+                    {{ t('auth.password') }}
+                </label>
                 <input
                     id="password"
                     v-model="form.password"
@@ -65,7 +70,7 @@ const submit = () => {
 
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700" for="password_confirmation">
-                    Confirm password
+                    {{ t('auth.confirmPassword') }}
                 </label>
                 <input
                     id="password_confirmation"
@@ -81,13 +86,13 @@ const submit = () => {
                 :disabled="form.processing"
                 class="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
             >
-                Sign up
+                {{ t('auth.signUp') }}
             </button>
         </form>
 
         <p class="mt-4 text-sm text-gray-600">
-            Already have an account?
-            <Link href="/login" class="text-gray-900 underline">Log in</Link>
+            {{ t('auth.haveAccount') }}
+            <Link href="/login" class="text-gray-900 underline">{{ t('auth.logIn') }}</Link>
         </p>
     </div>
 </template>

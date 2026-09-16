@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
+use App\Models\StoreSetting;
 use App\Services\Cart;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,8 +16,6 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    private const TAX_RATE = 0.08;
-
     public function create(Request $request, Cart $cart): Response|RedirectResponse
     {
         $items = $cart->items();
@@ -26,11 +25,13 @@ class CheckoutController extends Controller
         }
 
         $request->user()->loadMissing('profile');
+        $settings = StoreSetting::current();
 
         return Inertia::render('Shop/Checkout', [
             'items' => $items->values(),
             'subtotal' => $cart->subtotal(),
-            'taxRate' => self::TAX_RATE,
+            'taxRate' => (float) $settings->tax_rate,
+            'shippingCost' => (float) $settings->shipping_cost,
             'profile' => $request->user()->profile,
         ]);
     }
@@ -56,10 +57,13 @@ class CheckoutController extends Controller
             }
         }
 
-        $order = DB::transaction(function () use ($items, $validated, $request) {
+        $settings = StoreSetting::current();
+
+        $order = DB::transaction(function () use ($items, $validated, $request, $settings) {
             $subtotal = round($items->sum('total'), 2);
-            $tax = round($subtotal * self::TAX_RATE, 2);
-            $total = round($subtotal + $tax, 2);
+            $tax = round($subtotal * (float) $settings->tax_rate, 2);
+            $shippingCost = round((float) $settings->shipping_cost, 2);
+            $total = round($subtotal + $tax + $shippingCost, 2);
 
             $order = SalesOrder::create([
                 'order_number' => 'ORD-'.strtoupper(Str::random(10)),
@@ -67,7 +71,7 @@ class CheckoutController extends Controller
                 'status' => SalesOrder::STATUS_PENDING,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
-                'shipping_cost' => 0,
+                'shipping_cost' => $shippingCost,
                 'total' => $total,
                 'shipping_address' => $validated['shipping_address'],
                 'notes' => $validated['notes'] ?? null,

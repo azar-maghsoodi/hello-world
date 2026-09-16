@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useCurrency } from '@/utils/currency';
 
 defineOptions({ layout: AdminLayout });
 
@@ -11,6 +12,7 @@ const props = defineProps({
     filters: { type: Object, default: () => ({}) },
 });
 
+const money = useCurrency();
 const search = ref(props.filters.search ?? '');
 
 const runSearch = () => {
@@ -67,8 +69,8 @@ const destroy = (product) => {
                     <td class="px-4 py-3 text-gray-900">{{ product.name }}</td>
                     <td class="px-4 py-3 text-gray-500">{{ product.sku }}</td>
                     <td class="px-4 py-3 text-gray-500">
-                        <span v-if="product.sale_price" class="text-gray-900">${{ product.sale_price }}</span>
-                        <span v-else>${{ product.price }}</span>
+                        <span v-if="product.sale_price" class="text-gray-900">{{ money(product.sale_price) }}</span>
+                        <span v-else>{{ money(product.price) }}</span>
                     </td>
                     <td class="px-4 py-3 text-gray-500">{{ product.quantity }}</td>
                     <td class="px-4 py-3 text-gray-500">

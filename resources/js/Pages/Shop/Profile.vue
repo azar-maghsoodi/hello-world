@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useTranslations } from '@/i18n';
 
 defineOptions({ layout: ShopLayout });
 
@@ -9,6 +10,8 @@ const props = defineProps({
     user: { type: Object, required: true },
     profile: { type: Object, default: null },
 });
+
+const t = useTranslations();
 
 const form = useForm({
     name: props.user.name,
@@ -30,15 +33,17 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="My Profile" />
+    <Head :title="t('profile.title')" />
 
     <div class="mx-auto max-w-xl">
-        <h1 class="mb-6 text-2xl font-semibold text-gray-900">My Profile</h1>
+        <h1 class="mb-6 text-2xl font-semibold text-gray-900">{{ t('profile.title') }}</h1>
 
         <form @submit.prevent="submit" class="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="name">Name</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="name">
+                        {{ t('profile.name') }}
+                    </label>
                     <input
                         id="name"
                         v-model="form.name"
@@ -50,7 +55,9 @@ const submit = () => {
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="email">Email</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="email">
+                        {{ t('profile.email') }}
+                    </label>
                     <input
                         id="email"
                         v-model="form.email"
@@ -64,7 +71,9 @@ const submit = () => {
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="phone">Phone</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="phone">
+                        {{ t('profile.phone') }}
+                    </label>
                     <input
                         id="phone"
                         v-model="form.phone"
@@ -75,7 +84,7 @@ const submit = () => {
 
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700" for="date_of_birth">
-                        Date of birth
+                        {{ t('profile.dateOfBirth') }}
                     </label>
                     <input
                         id="date_of_birth"
@@ -87,7 +96,7 @@ const submit = () => {
             </div>
 
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="bio">Bio</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="bio">{{ t('profile.bio') }}</label>
                 <textarea
                     id="bio"
                     v-model="form.bio"
@@ -97,26 +106,30 @@ const submit = () => {
             </div>
 
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700" for="address_line1">Address</label>
+                <label class="mb-1 block text-sm font-medium text-gray-700" for="address_line1">
+                    {{ t('profile.address') }}
+                </label>
                 <input
                     id="address_line1"
                     v-model="form.address_line1"
                     type="text"
-                    placeholder="Address line 1"
+                    :placeholder="t('profile.addressLine1')"
                     class="mb-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
                 >
                 <input
                     id="address_line2"
                     v-model="form.address_line2"
                     type="text"
-                    placeholder="Address line 2 (optional)"
+                    :placeholder="t('profile.addressLine2')"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
                 >
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="city">City</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="city">
+                        {{ t('profile.city') }}
+                    </label>
                     <input
                         id="city"
                         v-model="form.city"
@@ -125,7 +138,9 @@ const submit = () => {
                     >
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="state">State</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="state">
+                        {{ t('profile.state') }}
+                    </label>
                     <input
                         id="state"
                         v-model="form.state"
@@ -138,7 +153,7 @@ const submit = () => {
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700" for="postal_code">
-                        Postal code
+                        {{ t('profile.postalCode') }}
                     </label>
                     <input
                         id="postal_code"
@@ -148,7 +163,9 @@ const submit = () => {
                     >
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="country">Country</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="country">
+                        {{ t('profile.country') }}
+                    </label>
                     <input
                         id="country"
                         v-model="form.country"
@@ -163,7 +180,7 @@ const submit = () => {
                 :disabled="form.processing"
                 class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
             >
-                Save changes
+                {{ t('profile.saveChanges') }}
             </button>
         </form>
     </div>

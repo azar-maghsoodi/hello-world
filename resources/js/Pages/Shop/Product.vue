@@ -2,12 +2,17 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useTranslations } from '@/i18n';
+import { useCurrency } from '@/utils/currency';
 
 defineOptions({ layout: ShopLayout });
 
 const props = defineProps({
     product: { type: Object, required: true },
 });
+
+const t = useTranslations();
+const money = useCurrency();
 
 const form = useForm({
     product_id: props.product.id,
@@ -23,7 +28,7 @@ const addToCart = () => {
     <Head :title="product.name" />
 
     <nav class="mb-4 text-sm text-gray-500">
-        <Link href="/" class="hover:text-gray-800">Shop</Link>
+        <Link href="/" class="hover:text-gray-800">{{ t('breadcrumb.shop') }}</Link>
         <span class="mx-1">/</span>
         <span class="text-gray-800">{{ product.name }}</span>
     </nav>
@@ -43,24 +48,26 @@ const addToCart = () => {
 
         <div>
             <h1 class="text-2xl font-semibold text-gray-900">{{ product.name }}</h1>
-            <p class="mt-1 text-sm text-gray-500">SKU: {{ product.sku }}</p>
+            <p class="mt-1 text-sm text-gray-500">{{ t('product.sku') }}: {{ product.sku }}</p>
 
             <div class="mt-4 flex items-center gap-3">
                 <span class="text-2xl font-semibold text-gray-900">
-                    ${{ product.sale_price ?? product.price }}
+                    {{ money(product.sale_price ?? product.price) }}
                 </span>
                 <span v-if="product.sale_price" class="text-lg text-gray-400 line-through">
-                    ${{ product.price }}
+                    {{ money(product.price) }}
                 </span>
             </div>
 
             <p class="mt-2 text-sm" :class="product.quantity > 0 ? 'text-green-600' : 'text-red-600'">
-                {{ product.quantity > 0 ? `${product.quantity} in stock` : 'Out of stock' }}
+                {{ product.quantity > 0 ? `${product.quantity} ${t('product.inStock')}` : t('product.outOfStock') }}
             </p>
 
             <form v-if="product.quantity > 0" @submit.prevent="addToCart" class="mt-4 flex items-end gap-3">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700" for="quantity">Quantity</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="quantity">
+                        {{ t('product.quantity') }}
+                    </label>
                     <input
                         id="quantity"
                         v-model.number="form.quantity"
@@ -75,7 +82,7 @@ const addToCart = () => {
                     :disabled="form.processing"
                     class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    Add to cart
+                    {{ t('product.addToCart') }}
                 </button>
             </form>
             <p v-if="form.errors.quantity" class="mt-1 text-sm text-red-600">{{ form.errors.quantity }}</p>
@@ -86,7 +93,7 @@ const addToCart = () => {
             </p>
 
             <div v-if="product.categories?.length" class="mt-6">
-                <p class="mb-2 text-sm font-medium text-gray-700">Categories</p>
+                <p class="mb-2 text-sm font-medium text-gray-700">{{ t('product.categories') }}</p>
                 <div class="flex flex-wrap gap-2">
                     <Link
                         v-for="category in product.categories"
@@ -100,7 +107,7 @@ const addToCart = () => {
             </div>
 
             <div v-if="product.attributes?.length" class="mt-6">
-                <p class="mb-2 text-sm font-medium text-gray-700">Attributes</p>
+                <p class="mb-2 text-sm font-medium text-gray-700">{{ t('product.attributes') }}</p>
                 <div class="flex flex-wrap gap-2">
                     <span
                         v-for="attribute in product.attributes"
