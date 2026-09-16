@@ -1,15 +1,15 @@
 # hello-world
 
-A starter application built with **Laravel**, **Inertia.js**, **Vue 3**, and **MySQL**.
+An online shop built with **Laravel 13**, **Inertia.js**, **Vue 3**, and **MySQL**.
 
-It ships with a small working example — a Tasks list — so you can see the whole
-stack wired together: Laravel routes and controllers render Vue pages via
-Inertia (no separate API/SPA build needed), and data is persisted to MySQL
-through Eloquent.
+It has a public storefront (categories, subcategories, products), customer
+registration/login, and an admin panel for managing catalog data — all
+server-rendered through Inertia, so there's no separate API layer. It also
+still ships the original Tasks demo at `/tasks`.
 
 ## Stack
 
-- **Backend:** Laravel 12 (PHP 8.4)
+- **Backend:** Laravel 13 (PHP 8.2+)
 - **Frontend:** Vue 3 + Inertia.js (server-driven SPA, no REST/GraphQL layer)
 - **Database:** MySQL
 - **Build tool:** Vite (with Tailwind CSS v4)
@@ -49,11 +49,19 @@ Create the database (adjust for your MySQL client/credentials):
 mysql -u root -e "CREATE DATABASE laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-Run migrations:
+Run migrations, seed some demo data, and link storage (for product images):
 
 ```bash
-php artisan migrate
+php artisan migrate --seed
+php artisan storage:link
 ```
+
+The seeder creates:
+
+- An admin: `admin@example.com` / `password`
+- A customer: `customer@example.com` / `password`
+- A few category trees (Electronics, Clothing, Home & Garden) with
+  subcategories, products, and attributes.
 
 ## Running the app
 
@@ -69,19 +77,54 @@ In another, start the Laravel dev server:
 php artisan serve
 ```
 
-Visit `http://127.0.0.1:8000` — it redirects to `/tasks`, where you can add,
-complete, and delete tasks.
+Visit `http://127.0.0.1:8000` for the storefront, or log in as the seeded
+admin and visit `/admin` for the admin panel.
+
+## Data model
+
+- **Category** — has a nullable `parent_id` pointing at another category, so
+  a category can be a top-level category or a subcategory of another. A
+  category can have many products, and a product can belong to many
+  categories (`category_product` pivot table).
+- **Product** — has the usual commerce fields: `name`, `slug`, `sku`,
+  `description`, `short_description`, `price`, `sale_price`, `quantity`,
+  `weight`, `image`, `gallery` (JSON), `is_active`, `is_featured`, and SEO
+  `meta_title`/`meta_description`.
+- **ProductAttribute** — a `name`/`value` pair (e.g. `Color: Red`). A product
+  can have many attributes, and an attribute can belong to many products
+  (`attribute_product` pivot table).
+- **User** — a single `users` table for both shop customers and admins,
+  distinguished by a `role` column (`customer` or `admin`). Only admins can
+  reach `/admin` (enforced by the `admin` middleware, `App\Http\Middleware\EnsureUserIsAdmin`).
 
 ## How it fits together
 
-- `routes/web.php` — defines the `tasks` resource routes.
-- `app/Http/Controllers/TaskController.php` — validates input, talks to the
-  `Task` Eloquent model, and returns Inertia responses.
-- `app/Models/Task.php` — the Eloquent model backed by the `tasks` MySQL table.
-- `database/migrations/..._create_tasks_table.php` — the `tasks` table schema.
-- `resources/js/Pages/Tasks/Index.vue` — the Vue 3 page component Inertia renders.
-- `resources/js/app.js` — the Inertia + Vue app entry point.
-- `resources/views/app.blade.php` — the single Blade root template Inertia hydrates into.
+- `routes/web.php` — public storefront routes, `guest`-only auth routes,
+  and the `admin`-only route group.
+- `app/Http/Controllers/Shop/*` — storefront controllers (home, category,
+  product pages).
+- `app/Http/Controllers/Auth/*` — registration and session (login/logout)
+  controllers.
+- `app/Http/Controllers/Admin/*` — admin CRUD controllers for categories,
+  products, attributes, and user role management.
+- `app/Models/{Category,Product,ProductAttribute,User}.php` — Eloquent
+  models and their relationships.
+- `resources/js/Pages/Shop/*` — storefront Vue pages.
+- `resources/js/Pages/Auth/*` — login/register Vue pages.
+- `resources/js/Pages/Admin/*` — admin panel Vue pages.
+- `resources/js/Layouts/{ShopLayout,AdminLayout}.vue` — the two page shells.
+- `app/Http/Controllers/TaskController.php`, `resources/js/Pages/Tasks/Index.vue`
+  — the original Tasks demo, still available at `/tasks`.
+
+## Tests
+
+```bash
+php artisan test
+```
+
+Feature tests cover model relationships, auth (register/login/logout),
+admin authorization, and admin CRUD for categories, products, attributes,
+and users.
 
 ## Production build
 
