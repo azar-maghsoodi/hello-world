@@ -1,0 +1,255 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Filament's default "amber" primary palette */
+    --color-primary-50: #fffbeb;
+    --color-primary-100: #fef3c7;
+    --color-primary-200: #fde68a;
+    --color-primary-300: #fcd34d;
+    --color-primary-400: #fbbf24;
+    --color-primary-500: #f59e0b;
+    --color-primary-600: #d97706;
+    --color-primary-700: #b45309;
+    --color-primary-800: #92400e;
+    --color-primary-900: #78350f;
+}
+
+/*
+ * Filament-inspired admin UI kit: a small set of component classes so every
+ * admin page (sidebar, tables, forms, buttons, badges) shares one look.
+ */
+@layer components {
+    /* Shell */
+    .fi-sidebar {
+        @apply flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white;
+    }
+
+    .fi-sidebar-brand {
+        @apply flex items-center gap-2 border-b border-gray-200 px-5 py-4 text-base font-bold text-gray-950;
+    }
+
+    .fi-nav-group-label {
+        @apply px-3 pt-4 pb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase first:pt-3;
+    }
+
+    .fi-nav-link {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900;
+    }
+
+    .fi-nav-link-active {
+        @apply bg-primary-50 text-primary-700 hover:bg-primary-50 hover:text-primary-700;
+    }
+
+    .fi-nav-icon {
+        @apply size-5 shrink-0 text-gray-400;
+    }
+
+    .fi-nav-link-active .fi-nav-icon {
+        @apply text-primary-600;
+    }
+
+    .fi-topbar {
+        @apply flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4;
+    }
+
+    /* Page header */
+    .fi-page-header {
+        @apply mb-6 flex flex-wrap items-start justify-between gap-4;
+    }
+
+    .fi-page-title {
+        @apply text-2xl font-bold tracking-tight text-gray-950;
+    }
+
+    .fi-page-subtitle {
+        @apply mt-1 max-w-2xl text-sm text-gray-500;
+    }
+
+    /* Buttons */
+    .fi-btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .fi-btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .fi-btn-danger-text {
+        @apply text-sm font-medium text-danger-600 hover:text-danger-700;
+    }
+
+    .fi-link {
+        @apply text-sm font-medium text-gray-600 hover:text-gray-900;
+    }
+
+    /* Cards */
+    .fi-card {
+        @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+    }
+
+    .fi-card-body {
+        @apply p-6;
+    }
+
+    .fi-stat-card {
+        @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm;
+    }
+
+    .fi-stat-label {
+        @apply text-sm font-medium text-gray-500;
+    }
+
+    .fi-stat-value {
+        @apply mt-1 text-3xl font-semibold text-gray-950;
+    }
+
+    /* Tables */
+    .fi-table-wrapper {
+        @apply overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm;
+    }
+
+    .fi-table {
+        @apply w-full text-left text-sm;
+    }
+
+    .fi-table thead {
+        @apply border-b border-gray-200 bg-gray-50;
+    }
+
+    .fi-table th {
+        @apply px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase;
+    }
+
+    .fi-table tbody {
+        @apply divide-y divide-gray-100;
+    }
+
+    .fi-table tbody tr {
+        @apply transition-colors hover:bg-gray-50;
+    }
+
+    .fi-table td {
+        @apply px-4 py-3 text-gray-700;
+    }
+
+    .fi-table-empty {
+        @apply px-4 py-10 text-center text-sm text-gray-400;
+    }
+
+    .fi-cell-primary {
+        @apply font-medium text-gray-950;
+    }
+
+    /* Badges */
+    .fi-badge-success {
+        @apply inline-flex items-center rounded-full bg-success-50 px-2.5 py-0.5 text-xs font-medium text-success-700 ring-1 ring-success-600/20 ring-inset;
+    }
+
+    .fi-badge-gray {
+        @apply inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-gray-500/10 ring-inset;
+    }
+
+    .fi-badge-warning {
+        @apply inline-flex items-center rounded-full bg-warning-50 px-2.5 py-0.5 text-xs font-medium text-warning-700 ring-1 ring-warning-600/20 ring-inset;
+    }
+
+    .fi-badge-info {
+        @apply inline-flex items-center rounded-full bg-info-50 px-2.5 py-0.5 text-xs font-medium text-info-700 ring-1 ring-info-600/20 ring-inset;
+    }
+
+    .fi-badge-danger {
+        @apply inline-flex items-center rounded-full bg-danger-50 px-2.5 py-0.5 text-xs font-medium text-danger-700 ring-1 ring-danger-600/20 ring-inset;
+    }
+
+    /* Forms */
+    .fi-field {
+        @apply space-y-1.5;
+    }
+
+    .fi-label {
+        @apply block text-sm font-medium text-gray-950;
+    }
+
+    .fi-hint {
+        @apply text-xs text-gray-500;
+    }
+
+    .fi-error {
+        @apply text-xs font-medium text-danger-600;
+    }
+
+    .fi-input,
+    .fi-select,
+    .fi-textarea {
+        @apply block w-full rounded-lg border-gray-300 text-sm text-gray-950 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:ring-primary-500;
+    }
+
+    .fi-checkbox {
+        @apply size-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500;
+    }
+
+    .fi-checkbox-tile {
+        @apply flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 has-checked:border-primary-300 has-checked:bg-primary-50;
+    }
+
+    .fi-form-section {
+        @apply divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white shadow-sm;
+    }
+
+    .fi-form-section-body {
+        @apply space-y-4 p-6;
+    }
+
+    /* Alerts */
+    .fi-alert-success {
+        @apply flex items-center gap-2 rounded-lg border border-success-200 bg-success-50 px-4 py-3 text-sm font-medium text-success-800;
+    }
+
+    /* Tabs */
+    .fi-tab {
+        @apply rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 capitalize hover:bg-gray-50;
+    }
+
+    .fi-tab-active {
+        @apply border-primary-600 bg-primary-600 text-white hover:bg-primary-600;
+    }
+
+    /* Pagination */
+    .fi-pagination-link {
+        @apply rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100;
+    }
+
+    .fi-pagination-link-active {
+        @apply bg-primary-600 text-white hover:bg-primary-600;
+    }
+
+    .fi-pagination-link-disabled {
+        @apply pointer-events-none opacity-40;
+    }
+}
+
+@theme {
+    --color-success-50: #f0fdf4;
+    --color-success-200: #bbf7d0;
+    --color-success-600: #16a34a;
+    --color-success-700: #15803d;
+    --color-success-800: #166534;
+
+    --color-warning-50: #fffbeb;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+
+    --color-info-50: #eff6ff;
+    --color-info-600: #2563eb;
+    --color-info-700: #1d4ed8;
+
+    --color-danger-50: #fef2f2;
+    --color-danger-600: #dc2626;
+    --color-danger-700: #b91c1c;
+}
