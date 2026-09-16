@@ -17,9 +17,21 @@ class ProductAttributeFactory extends Factory
      */
     public function definition(): array
     {
+        [$name, $value] = fake()->unique()->randomElement([
+            ['Color', 'Red'],
+            ['Color', 'Blue'],
+            ['Color', 'Green'],
+            ['Color', 'Black'],
+            ['Size', 'Small'],
+            ['Size', 'Medium'],
+            ['Size', 'Large'],
+            ['Material', 'Cotton'],
+            ['Material', 'Leather'],
+        ]);
+
         return [
-            'name' => fake()->randomElement(['Color', 'Size', 'Material']),
-            'value' => fake()->randomElement(['Red', 'Blue', 'Green', 'Small', 'Medium', 'Large', 'Cotton', 'Leather']),
+            'name' => $name,
+            'value' => $value,
         ];
     }
 }

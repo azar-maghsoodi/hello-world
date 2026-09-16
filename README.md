@@ -96,6 +96,16 @@ admin and visit `/admin` for the admin panel.
 - **User** — a single `users` table for both shop customers and admins,
   distinguished by a `role` column (`customer` or `admin`). Only admins can
   reach `/admin` (enforced by the `admin` middleware, `App\Http\Middleware\EnsureUserIsAdmin`).
+  A user has one `Profile` (contact/address details) and many `SalesOrder`s.
+- **Profile** — one-to-one with `User` (`user_id` is unique), holding
+  `phone`, `date_of_birth`, `avatar`, `bio`, and address fields.
+- **SalesOrder** — belongs to a `User`; has many `SalesOrderItem`s. Tracks
+  `order_number`, `status`, `subtotal`/`tax`/`shipping_cost`/`total`,
+  `shipping_address`, and `notes`.
+- **SalesOrderItem** — belongs to a `SalesOrder` and to a `Product`. Stores
+  `quantity`, `unit_price`, and `total`, plus a `product_name`/`product_sku`
+  snapshot so order history stays intact even if the product is later
+  edited or deleted (`product_id` is nullable and set null on delete).
 
 ## How it fits together
 
