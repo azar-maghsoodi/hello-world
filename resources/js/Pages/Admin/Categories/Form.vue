@@ -34,85 +34,59 @@ const submit = () => {
 <template>
     <Head :title="isEditing ? 'Edit category' : 'Add category'" />
 
-    <h2 class="mb-6 text-xl font-semibold text-gray-900">
-        {{ isEditing ? 'Edit category' : 'Add category' }}
-    </h2>
+    <div class="fi-page-header">
+        <h2 class="fi-page-title">{{ isEditing ? 'Edit category' : 'Add category' }}</h2>
+    </div>
 
-    <form @submit.prevent="submit" class="max-w-xl space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="name">Name</label>
-            <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                required
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
-            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
-        </div>
+    <form @submit.prevent="submit" class="max-w-xl">
+        <div class="fi-form-section">
+            <div class="fi-form-section-body">
+                <div class="fi-field">
+                    <label class="fi-label" for="name">Name</label>
+                    <input id="name" v-model="form.name" type="text" required class="fi-input">
+                    <p v-if="form.errors.name" class="fi-error">{{ form.errors.name }}</p>
+                </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="slug">
-                Slug <span class="text-gray-400">(optional, generated from name)</span>
-            </label>
-            <input
-                id="slug"
-                v-model="form.slug"
-                type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
-            <p v-if="form.errors.slug" class="mt-1 text-sm text-red-600">{{ form.errors.slug }}</p>
-        </div>
+                <div class="fi-field">
+                    <label class="fi-label" for="slug">
+                        Slug <span class="fi-hint">(optional, generated from name)</span>
+                    </label>
+                    <input id="slug" v-model="form.slug" type="text" class="fi-input">
+                    <p v-if="form.errors.slug" class="fi-error">{{ form.errors.slug }}</p>
+                </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="parent_id">Parent category</label>
-            <select
-                id="parent_id"
-                v-model="form.parent_id"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
-                <option value="">None (top-level category)</option>
-                <option v-for="parent in parentOptions" :key="parent.id" :value="parent.id">
-                    {{ parent.name }}
-                </option>
-            </select>
-            <p v-if="form.errors.parent_id" class="mt-1 text-sm text-red-600">{{ form.errors.parent_id }}</p>
-        </div>
+                <div class="fi-field">
+                    <label class="fi-label" for="parent_id">Parent category</label>
+                    <select id="parent_id" v-model="form.parent_id" class="fi-select">
+                        <option value="">None (top-level category)</option>
+                        <option v-for="parent in parentOptions" :key="parent.id" :value="parent.id">
+                            {{ parent.name }}
+                        </option>
+                    </select>
+                    <p v-if="form.errors.parent_id" class="fi-error">{{ form.errors.parent_id }}</p>
+                </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="description">Description</label>
-            <textarea
-                id="description"
-                v-model="form.description"
-                rows="3"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            />
-        </div>
+                <div class="fi-field">
+                    <label class="fi-label" for="description">Description</label>
+                    <textarea id="description" v-model="form.description" rows="3" class="fi-textarea" />
+                </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sort_order">Sort order</label>
-            <input
-                id="sort_order"
-                v-model.number="form.sort_order"
-                type="number"
-                min="0"
-                class="w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
-        </div>
+                <div class="fi-field">
+                    <label class="fi-label" for="sort_order">Sort order</label>
+                    <input id="sort_order" v-model.number="form.sort_order" type="number" min="0" class="fi-input w-32">
+                </div>
 
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input v-model="form.is_active" type="checkbox" class="rounded border-gray-300">
-            Active
-        </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input v-model="form.is_active" type="checkbox" class="fi-checkbox">
+                    Active
+                </label>
+            </div>
 
-        <div class="flex items-center gap-3 pt-2">
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-            >
-                {{ isEditing ? 'Save changes' : 'Create category' }}
-            </button>
+            <div class="flex items-center gap-3 px-6 py-4">
+                <button type="submit" :disabled="form.processing" class="fi-btn-primary">
+                    {{ isEditing ? 'Save changes' : 'Create category' }}
+                </button>
+            </div>
         </div>
     </form>
 </template>

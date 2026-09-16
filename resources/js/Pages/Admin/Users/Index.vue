@@ -25,26 +25,31 @@ const updateRole = (user, role) => {
 <template>
     <Head title="Users" />
 
-    <h2 class="mb-6 text-xl font-semibold text-gray-900">Users</h2>
+    <div class="fi-page-header">
+        <div>
+            <h2 class="fi-page-title">Users</h2>
+            <p class="fi-page-subtitle">Manage customer accounts and admin access.</p>
+        </div>
+    </div>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-gray-600">
+    <div class="fi-table-wrapper">
+        <table class="fi-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Name</th>
-                    <th class="px-4 py-3 font-medium">Email</th>
-                    <th class="px-4 py-3 font-medium">Role</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 <tr v-for="user in users.data" :key="user.id">
-                    <td class="px-4 py-3 text-gray-900">{{ user.name }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ user.email }}</td>
-                    <td class="px-4 py-3">
+                    <td class="fi-cell-primary">{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
                         <select
                             :value="user.role"
                             :disabled="user.id === currentUserId"
-                            class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-300 focus:ring disabled:opacity-50"
+                            class="fi-select w-auto disabled:opacity-50"
                             @change="updateRole(user, $event.target.value)"
                         >
                             <option value="customer">Customer</option>
@@ -54,7 +59,7 @@ const updateRole = (user, role) => {
                 </tr>
 
                 <tr v-if="users.data.length === 0">
-                    <td colspan="3" class="px-4 py-6 text-center text-gray-500">No users yet.</td>
+                    <td colspan="3" class="fi-table-empty">No users yet.</td>
                 </tr>
             </tbody>
         </table>
@@ -66,9 +71,9 @@ const updateRole = (user, role) => {
             :key="index"
             :href="link.url ?? '#'"
             :class="[
-                'rounded-md px-3 py-1 text-sm',
-                link.active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100',
-                !link.url && 'pointer-events-none opacity-50',
+                'fi-pagination-link',
+                link.active && 'fi-pagination-link-active',
+                !link.url && 'fi-pagination-link-disabled',
             ]"
             v-html="link.label"
         />

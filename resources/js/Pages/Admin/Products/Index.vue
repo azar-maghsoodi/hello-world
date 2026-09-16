@@ -29,78 +29,63 @@ const destroy = (product) => {
 <template>
     <Head title="Products" />
 
-    <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Products</h2>
-        <Link
-            href="/admin/products/create"
-            class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
-        >
+    <div class="fi-page-header">
+        <div>
+            <h2 class="fi-page-title">Products</h2>
+            <p class="fi-page-subtitle">Manage the items available in your store.</p>
+        </div>
+        <Link href="/admin/products/create" class="fi-btn-primary">
             Add product
         </Link>
     </div>
 
     <form @submit.prevent="runSearch" class="mb-4 flex max-w-sm gap-2">
-        <input
-            v-model="search"
-            type="text"
-            placeholder="Search products..."
-            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-        >
-        <button type="submit" class="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+        <input v-model="search" type="text" placeholder="Search products..." class="fi-input">
+        <button type="submit" class="fi-btn-secondary">
             Search
         </button>
     </form>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-gray-600">
+    <div class="fi-table-wrapper">
+        <table class="fi-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Name</th>
-                    <th class="px-4 py-3 font-medium">SKU</th>
-                    <th class="px-4 py-3 font-medium">Price</th>
-                    <th class="px-4 py-3 font-medium">Stock</th>
-                    <th class="px-4 py-3 font-medium">Categories</th>
-                    <th class="px-4 py-3 font-medium">Active</th>
-                    <th class="px-4 py-3 font-medium"></th>
+                    <th>Name</th>
+                    <th>SKU</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Categories</th>
+                    <th>Active</th>
+                    <th></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 <tr v-for="product in products.data" :key="product.id">
-                    <td class="px-4 py-3 text-gray-900">{{ product.name }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ product.sku }}</td>
-                    <td class="px-4 py-3 text-gray-500">
-                        <span v-if="product.sale_price" class="text-gray-900">{{ money(product.sale_price) }}</span>
+                    <td class="fi-cell-primary">{{ product.name }}</td>
+                    <td>{{ product.sku }}</td>
+                    <td>
+                        <span v-if="product.sale_price" class="fi-cell-primary">{{ money(product.sale_price) }}</span>
                         <span v-else>{{ money(product.price) }}</span>
                     </td>
-                    <td class="px-4 py-3 text-gray-500">{{ product.quantity }}</td>
-                    <td class="px-4 py-3 text-gray-500">
-                        {{ product.categories.map((c) => c.name).join(', ') || '—' }}
-                    </td>
-                    <td class="px-4 py-3">
-                        <span
-                            :class="[
-                                'rounded-full px-2 py-0.5 text-xs',
-                                product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600',
-                            ]"
-                        >
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.categories.map((c) => c.name).join(', ') || '—' }}</td>
+                    <td>
+                        <span :class="product.is_active ? 'fi-badge-success' : 'fi-badge-gray'">
                             {{ product.is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right">
-                        <Link
-                            :href="`/admin/products/${product.id}/edit`"
-                            class="mr-3 text-gray-600 hover:text-gray-900"
-                        >
+                    <td class="text-right">
+                        <Link :href="`/admin/products/${product.id}/edit`" class="fi-link mr-4">
                             Edit
                         </Link>
-                        <button type="button" class="text-red-600 hover:text-red-800" @click="destroy(product)">
+                        <button type="button" class="fi-btn-danger-text" @click="destroy(product)">
                             Delete
                         </button>
                     </td>
                 </tr>
 
                 <tr v-if="products.data.length === 0">
-                    <td colspan="7" class="px-4 py-6 text-center text-gray-500">No products found.</td>
+                    <td colspan="7" class="fi-table-empty">No products found.</td>
                 </tr>
             </tbody>
         </table>
@@ -112,9 +97,9 @@ const destroy = (product) => {
             :key="index"
             :href="link.url ?? '#'"
             :class="[
-                'rounded-md px-3 py-1 text-sm',
-                link.active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100',
-                !link.url && 'pointer-events-none opacity-50',
+                'fi-pagination-link',
+                link.active && 'fi-pagination-link-active',
+                !link.url && 'fi-pagination-link-disabled',
             ]"
             v-html="link.label"
         />

@@ -28,62 +28,53 @@ const updateStatus = () => {
         <span class="text-gray-800">{{ order.order_number }}</span>
     </nav>
 
-    <div class="mb-6 flex items-center justify-between">
+    <div class="fi-page-header">
         <div>
-            <h2 class="text-xl font-semibold text-gray-900">Order {{ order.order_number }}</h2>
-            <p class="text-sm text-gray-500">
-                {{ order.user?.name }} — {{ order.user?.email }}
-            </p>
+            <h2 class="fi-page-title">Order {{ order.order_number }}</h2>
+            <p class="fi-page-subtitle">{{ order.user?.name }} — {{ order.user?.email }}</p>
         </div>
 
         <form @submit.prevent="updateStatus" class="flex items-center gap-2">
-            <select
-                v-model="statusForm.status"
-                class="rounded-md border-gray-300 text-sm capitalize shadow-sm focus:border-blue-300 focus:ring"
-            >
+            <select v-model="statusForm.status" class="fi-select capitalize">
                 <option v-for="status in statuses" :key="status" :value="status" class="capitalize">
                     {{ status }}
                 </option>
             </select>
-            <button
-                type="submit"
-                :disabled="statusForm.processing"
-                class="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <button type="submit" :disabled="statusForm.processing" class="fi-btn-primary">
                 Update status
             </button>
         </form>
     </div>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-gray-600">
+    <div class="fi-table-wrapper">
+        <table class="fi-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Product</th>
-                    <th class="px-4 py-3 font-medium">SKU</th>
-                    <th class="px-4 py-3 font-medium">Quantity</th>
-                    <th class="px-4 py-3 font-medium">Unit price</th>
-                    <th class="px-4 py-3 font-medium">Total</th>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Quantity</th>
+                    <th>Unit price</th>
+                    <th>Total</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 <tr v-for="item in order.items" :key="item.id">
-                    <td class="px-4 py-3 text-gray-900">
+                    <td class="fi-cell-primary">
                         <Link v-if="item.product" :href="`/products/${item.product.slug}`" class="hover:underline">
                             {{ item.product_name }}
                         </Link>
                         <span v-else>{{ item.product_name }} <span class="text-xs text-gray-400">(deleted)</span></span>
                     </td>
-                    <td class="px-4 py-3 text-gray-500">{{ item.product_sku }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ item.quantity }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ money(item.unit_price) }}</td>
-                    <td class="px-4 py-3 text-gray-900">{{ money(item.total) }}</td>
+                    <td>{{ item.product_sku }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ money(item.unit_price) }}</td>
+                    <td class="fi-cell-primary">{{ money(item.total) }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="mt-6 ml-auto max-w-xs space-y-1 text-sm">
+    <div class="fi-card mt-6 ml-auto max-w-xs space-y-1 p-4 text-sm">
         <div class="flex justify-between text-gray-600">
             <span>Subtotal</span>
             <span>{{ money(order.subtotal) }}</span>
@@ -96,19 +87,19 @@ const updateStatus = () => {
             <span>Shipping</span>
             <span>{{ money(order.shipping_cost) }}</span>
         </div>
-        <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
+        <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-950">
             <span>Total</span>
             <span>{{ money(order.total) }}</span>
         </div>
     </div>
 
     <div v-if="order.shipping_address || order.notes" class="mt-6 grid gap-4 sm:grid-cols-2">
-        <div v-if="order.shipping_address">
-            <p class="mb-1 text-sm font-medium text-gray-700">Shipping address</p>
+        <div v-if="order.shipping_address" class="fi-card p-4">
+            <p class="fi-label mb-1">Shipping address</p>
             <p class="whitespace-pre-line text-sm text-gray-600">{{ order.shipping_address }}</p>
         </div>
-        <div v-if="order.notes">
-            <p class="mb-1 text-sm font-medium text-gray-700">Notes</p>
+        <div v-if="order.notes" class="fi-card p-4">
+            <p class="fi-label mb-1">Notes</p>
             <p class="whitespace-pre-line text-sm text-gray-600">{{ order.notes }}</p>
         </div>
     </div>

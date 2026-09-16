@@ -19,57 +19,49 @@ const destroy = (category) => {
 <template>
     <Head title="Categories" />
 
-    <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Categories</h2>
-        <Link
-            href="/admin/categories/create"
-            class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
-        >
+    <div class="fi-page-header">
+        <div>
+            <h2 class="fi-page-title">Categories</h2>
+            <p class="fi-page-subtitle">Organize your catalog into categories and subcategories.</p>
+        </div>
+        <Link href="/admin/categories/create" class="fi-btn-primary">
             Add category
         </Link>
     </div>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-gray-600">
+    <div class="fi-table-wrapper">
+        <table class="fi-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Name</th>
-                    <th class="px-4 py-3 font-medium">Parent</th>
-                    <th class="px-4 py-3 font-medium">Products</th>
-                    <th class="px-4 py-3 font-medium">Active</th>
-                    <th class="px-4 py-3 font-medium"></th>
+                    <th>Name</th>
+                    <th>Parent</th>
+                    <th>Products</th>
+                    <th>Active</th>
+                    <th></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 <tr v-for="category in categories" :key="category.id">
-                    <td class="px-4 py-3 text-gray-900">{{ category.name }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ category.parent?.name ?? '—' }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ category.products_count }}</td>
-                    <td class="px-4 py-3">
-                        <span
-                            :class="[
-                                'rounded-full px-2 py-0.5 text-xs',
-                                category.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600',
-                            ]"
-                        >
+                    <td class="fi-cell-primary">{{ category.name }}</td>
+                    <td>{{ category.parent?.name ?? '—' }}</td>
+                    <td>{{ category.products_count }}</td>
+                    <td>
+                        <span :class="category.is_active ? 'fi-badge-success' : 'fi-badge-gray'">
                             {{ category.is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right">
-                        <Link
-                            :href="`/admin/categories/${category.id}/edit`"
-                            class="mr-3 text-gray-600 hover:text-gray-900"
-                        >
+                    <td class="text-right">
+                        <Link :href="`/admin/categories/${category.id}/edit`" class="fi-link mr-4">
                             Edit
                         </Link>
-                        <button type="button" class="text-red-600 hover:text-red-800" @click="destroy(category)">
+                        <button type="button" class="fi-btn-danger-text" @click="destroy(category)">
                             Delete
                         </button>
                     </td>
                 </tr>
 
                 <tr v-if="categories.length === 0">
-                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No categories yet.</td>
+                    <td colspan="5" class="fi-table-empty">No categories yet.</td>
                 </tr>
             </tbody>
         </table>

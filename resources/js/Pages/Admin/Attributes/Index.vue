@@ -52,98 +52,66 @@ const destroy = (attribute) => {
 <template>
     <Head title="Attributes" />
 
-    <h2 class="mb-6 text-xl font-semibold text-gray-900">Product Attributes</h2>
+    <div class="fi-page-header">
+        <div>
+            <h2 class="fi-page-title">Product Attributes</h2>
+            <p class="fi-page-subtitle">Reusable name/value pairs you can attach to products, e.g. Color: Red.</p>
+        </div>
+    </div>
 
-    <form
-        @submit.prevent="submitCreate"
-        class="mb-6 flex max-w-lg items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-    >
-        <div class="flex-1">
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="new-name">Name</label>
-            <input
-                id="new-name"
-                v-model="createForm.name"
-                type="text"
-                placeholder="e.g. Color"
-                required
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
+    <form @submit.prevent="submitCreate" class="fi-card mb-6 flex max-w-lg items-end gap-3 p-4">
+        <div class="fi-field flex-1">
+            <label class="fi-label" for="new-name">Name</label>
+            <input id="new-name" v-model="createForm.name" type="text" placeholder="e.g. Color" required class="fi-input">
         </div>
-        <div class="flex-1">
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="new-value">Value</label>
-            <input
-                id="new-value"
-                v-model="createForm.value"
-                type="text"
-                placeholder="e.g. Red"
-                required
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-            >
+        <div class="fi-field flex-1">
+            <label class="fi-label" for="new-value">Value</label>
+            <input id="new-value" v-model="createForm.value" type="text" placeholder="e.g. Red" required class="fi-input">
         </div>
-        <button
-            type="submit"
-            :disabled="createForm.processing"
-            class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <button type="submit" :disabled="createForm.processing" class="fi-btn-primary">
             Add
         </button>
     </form>
-    <p v-if="createForm.errors.name" class="mb-4 text-sm text-red-600">{{ createForm.errors.name }}</p>
+    <p v-if="createForm.errors.name" class="fi-error mb-4">{{ createForm.errors.name }}</p>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-gray-600">
+    <div class="fi-table-wrapper">
+        <table class="fi-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-medium">Name</th>
-                    <th class="px-4 py-3 font-medium">Value</th>
-                    <th class="px-4 py-3 font-medium">Products</th>
-                    <th class="px-4 py-3 font-medium"></th>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Products</th>
+                    <th></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 <tr v-for="attribute in attributes" :key="attribute.id">
                     <template v-if="editingId === attribute.id">
-                        <td class="px-4 py-2">
-                            <input
-                                v-model="editForm.name"
-                                type="text"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-                            >
+                        <td class="!py-2">
+                            <input v-model="editForm.name" type="text" class="fi-input">
                         </td>
-                        <td class="px-4 py-2">
-                            <input
-                                v-model="editForm.value"
-                                type="text"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
-                            >
+                        <td class="!py-2">
+                            <input v-model="editForm.value" type="text" class="fi-input">
                         </td>
-                        <td class="px-4 py-2 text-gray-500">{{ attribute.products_count }}</td>
-                        <td class="px-4 py-2 text-right">
-                            <button
-                                type="button"
-                                class="mr-3 text-gray-900 hover:underline"
-                                @click="submitEdit(attribute)"
-                            >
+                        <td>{{ attribute.products_count }}</td>
+                        <td class="text-right">
+                            <button type="button" class="fi-link mr-4" @click="submitEdit(attribute)">
                                 Save
                             </button>
-                            <button type="button" class="text-gray-500 hover:underline" @click="cancelEdit">
+                            <button type="button" class="fi-link text-gray-500" @click="cancelEdit">
                                 Cancel
                             </button>
                         </td>
                     </template>
                     <template v-else>
-                        <td class="px-4 py-3 text-gray-900">{{ attribute.name }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ attribute.value }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ attribute.products_count }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <button
-                                type="button"
-                                class="mr-3 text-gray-600 hover:text-gray-900"
-                                @click="startEdit(attribute)"
-                            >
+                        <td class="fi-cell-primary">{{ attribute.name }}</td>
+                        <td>{{ attribute.value }}</td>
+                        <td>{{ attribute.products_count }}</td>
+                        <td class="text-right">
+                            <button type="button" class="fi-link mr-4" @click="startEdit(attribute)">
                                 Edit
                             </button>
-                            <button type="button" class="text-red-600 hover:text-red-800" @click="destroy(attribute)">
+                            <button type="button" class="fi-btn-danger-text" @click="destroy(attribute)">
                                 Delete
                             </button>
                         </td>
@@ -151,7 +119,7 @@ const destroy = (attribute) => {
                 </tr>
 
                 <tr v-if="attributes.length === 0">
-                    <td colspan="4" class="px-4 py-6 text-center text-gray-500">No attributes yet.</td>
+                    <td colspan="4" class="fi-table-empty">No attributes yet.</td>
                 </tr>
             </tbody>
         </table>
