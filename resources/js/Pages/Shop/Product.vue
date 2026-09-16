@@ -1,12 +1,22 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
 
 defineOptions({ layout: ShopLayout });
 
-defineProps({
+const props = defineProps({
     product: { type: Object, required: true },
 });
+
+const form = useForm({
+    product_id: props.product.id,
+    quantity: 1,
+});
+
+const addToCart = () => {
+    form.post(route('cart.store'), { preserveScroll: true });
+};
 </script>
 
 <template>
@@ -47,6 +57,28 @@ defineProps({
             <p class="mt-2 text-sm" :class="product.quantity > 0 ? 'text-green-600' : 'text-red-600'">
                 {{ product.quantity > 0 ? `${product.quantity} in stock` : 'Out of stock' }}
             </p>
+
+            <form v-if="product.quantity > 0" @submit.prevent="addToCart" class="mt-4 flex items-end gap-3">
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700" for="quantity">Quantity</label>
+                    <input
+                        id="quantity"
+                        v-model.number="form.quantity"
+                        type="number"
+                        min="1"
+                        :max="product.quantity"
+                        class="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring"
+                    >
+                </div>
+                <button
+                    type="submit"
+                    :disabled="form.processing"
+                    class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    Add to cart
+                </button>
+            </form>
+            <p v-if="form.errors.quantity" class="mt-1 text-sm text-red-600">{{ form.errors.quantity }}</p>
 
             <p v-if="product.short_description" class="mt-4 text-gray-700">{{ product.short_description }}</p>
             <p v-if="product.description" class="mt-4 whitespace-pre-line text-sm text-gray-600">

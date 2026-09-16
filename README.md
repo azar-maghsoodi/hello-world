@@ -107,13 +107,27 @@ admin and visit `/admin` for the admin panel.
   snapshot so order history stays intact even if the product is later
   edited or deleted (`product_id` is nullable and set null on delete).
 
+## Shopping cart & checkout
+
+- A product page's "Add to cart" form adds items to a session-based cart
+  (`App\Services\Cart`) — works for guests too, capped to available stock.
+- `/cart` — review quantities, remove items, see the subtotal.
+- `/checkout` (requires login; a guest is sent to `/login` and returned to
+  checkout after signing in) — enter a shipping address (pre-filled from
+  the profile, if set) and place the order. This re-checks stock, then in
+  one DB transaction creates the `SalesOrder` and its `SalesOrderItem`s
+  (snapshotting product name/sku/price), decrements each product's
+  `quantity`, clears the cart, and redirects to the new order's detail page.
+  Tax is a flat 8% of subtotal; shipping is currently free.
+
 ## Customer account pages
 
-Logged-in customers get, from the "My orders" / name links in the header:
+Logged-in customers get, from the header nav:
 
 - `/profile` — edit their name, email, and profile details (phone, date of
   birth, bio, address).
-- `/orders` — their own order history (paginated).
+- `/orders` — their own order history (paginated), including orders placed
+  through checkout.
 - `/orders/{order}` — a single order's line items and totals. Viewing
   another user's order returns a 403.
 
@@ -125,11 +139,13 @@ Logged-in customers get, from the "My orders" / name links in the header:
 
 ## How it fits together
 
-- `routes/web.php` — public storefront routes, `guest`-only auth routes,
-  `auth`-only account routes (profile, orders), and the `admin`-only route
-  group.
+- `routes/web.php` — public storefront + cart routes, `guest`-only auth
+  routes, `auth`-only account routes (profile, orders, checkout), and the
+  `admin`-only route group.
+- `app/Services/Cart.php` — the session-backed cart (no `cart` DB table).
 - `app/Http/Controllers/Shop/*` — storefront controllers (home, category,
-  product pages) plus the customer's own profile and order controllers.
+  product pages) plus the customer's own profile, order, cart, and
+  checkout controllers.
 - `app/Http/Controllers/Auth/*` — registration and session (login/logout)
   controllers.
 - `app/Http/Controllers/Admin/*` — admin CRUD controllers for categories,

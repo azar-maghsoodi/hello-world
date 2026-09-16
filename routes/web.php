@@ -8,7 +8,9 @@ use App\Http\Controllers\Admin\SalesOrderController as AdminSalesOrderController
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CategoryController;
+use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\ProductController;
@@ -22,6 +24,11 @@ Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name
 
 Route::resource('tasks', TaskController::class)
     ->only(['index', 'store', 'update', 'destroy']);
+
+Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('cart', [CartController::class, 'store'])->name('cart.store');
+Route::patch('cart/{product}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
@@ -39,6 +46,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+    Route::get('checkout', [CheckoutController::class, 'create'])->name('checkout.create');
+    Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
