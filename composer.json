@@ -1,0 +1,6 @@
+{
+    "name": "azar-maghsoodi/hello-world",
+    "require": {
+        "php": "^8.3"
+    }
+}
