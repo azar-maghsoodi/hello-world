@@ -1,0 +1,301 @@
+/*
+ * B2Bora Partner Club - front-end + admin styles.
+ * All selectors are namespaced with `b2bora-pc-` to avoid clashing with
+ * the Ekomart theme or other plugins.
+ */
+
+.b2bora-pc-dashboard {
+	--b2bora-pc-primary: #1d4e3f;
+	--b2bora-pc-primary-light: #e8f3ee;
+	--b2bora-pc-accent: #c99a3a;
+	--b2bora-pc-text: #1f2937;
+	--b2bora-pc-muted: #6b7280;
+	--b2bora-pc-border: #e5e7eb;
+	--b2bora-pc-negative: #b42318;
+
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 1.5rem;
+	font-family: inherit;
+	color: var(--b2bora-pc-text);
+	box-sizing: border-box;
+}
+
+.b2bora-pc-dashboard *,
+.b2bora-pc-dashboard *::before,
+.b2bora-pc-dashboard *::after {
+	box-sizing: inherit;
+}
+
+.b2bora-pc-header {
+	margin-bottom: 1.5rem;
+}
+
+.b2bora-pc-title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin: 0;
+	color: var(--b2bora-pc-primary);
+}
+
+.b2bora-pc-summary {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) {
+	.b2bora-pc-summary {
+		grid-template-columns: 1fr;
+	}
+}
+
+.b2bora-pc-points-card,
+.b2bora-pc-level-card {
+	background: var(--b2bora-pc-primary-light);
+	border-radius: 10px;
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.b2bora-pc-points-label {
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--b2bora-pc-muted);
+}
+
+.b2bora-pc-points-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--b2bora-pc-primary);
+}
+
+.b2bora-pc-level-name {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: var(--b2bora-pc-primary);
+}
+
+.b2bora-pc-progress {
+	width: 100%;
+	height: 10px;
+	background: #fff;
+	border: 1px solid var(--b2bora-pc-border);
+	border-radius: 999px;
+	overflow: hidden;
+	margin-top: 0.25rem;
+}
+
+.b2bora-pc-progress-bar {
+	height: 100%;
+	background: var(--b2bora-pc-accent);
+	border-radius: 999px;
+	transition: width 0.3s ease;
+}
+
+.b2bora-pc-progress-text {
+	font-size: 0.85rem;
+	color: var(--b2bora-pc-muted);
+}
+
+.b2bora-pc-section {
+	margin-bottom: 2rem;
+}
+
+.b2bora-pc-section-title {
+	font-size: 1.1rem;
+	font-weight: 700;
+	margin: 0 0 0.75rem;
+	color: var(--b2bora-pc-primary);
+	border-bottom: 1px solid var(--b2bora-pc-border);
+	padding-bottom: 0.5rem;
+}
+
+.b2bora-pc-empty {
+	color: var(--b2bora-pc-muted);
+	font-style: italic;
+}
+
+.b2bora-pc-rewards-list,
+.b2bora-pc-activity-list,
+.b2bora-pc-missions-list,
+.b2bora-pc-redemptions-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.b2bora-pc-reward-card,
+.b2bora-pc-mission-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	background: #fff;
+	border: 1px solid var(--b2bora-pc-border);
+	border-radius: 8px;
+	padding: 1rem;
+	flex-wrap: wrap;
+}
+
+.b2bora-pc-reward-info,
+.b2bora-pc-mission-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.b2bora-pc-reward-name,
+.b2bora-pc-mission-name {
+	font-weight: 600;
+}
+
+.b2bora-pc-reward-description,
+.b2bora-pc-mission-description {
+	font-size: 0.85rem;
+	color: var(--b2bora-pc-muted);
+}
+
+.b2bora-pc-reward-cost {
+	font-size: 0.85rem;
+	color: var(--b2bora-pc-accent);
+	font-weight: 600;
+}
+
+.b2bora-pc-button {
+	background: var(--b2bora-pc-primary);
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	padding: 0.6rem 1.25rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 0.95rem;
+}
+
+.b2bora-pc-button:hover,
+.b2bora-pc-button:focus-visible {
+	background: #163d32;
+	color: #fff;
+}
+
+.b2bora-pc-button:disabled {
+	background: var(--b2bora-pc-muted);
+	cursor: not-allowed;
+}
+
+.b2bora-pc-activity-item {
+	display: flex;
+	gap: 0.75rem;
+	align-items: baseline;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--b2bora-pc-border);
+}
+
+.b2bora-pc-activity-item:last-child {
+	border-bottom: none;
+}
+
+.b2bora-pc-positive {
+	color: var(--b2bora-pc-primary);
+	font-weight: 700;
+}
+
+.b2bora-pc-negative {
+	color: var(--b2bora-pc-negative);
+	font-weight: 700;
+}
+
+.b2bora-pc-mission-completed {
+	opacity: 0.6;
+}
+
+.b2bora-pc-mission-bonus {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.b2bora-pc-redemption-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--b2bora-pc-border);
+}
+
+.b2bora-pc-redemption-item:last-child {
+	border-bottom: none;
+}
+
+.b2bora-pc-redemption-status {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: var(--b2bora-pc-muted);
+}
+
+.b2bora-pc-logged-out {
+	text-align: center;
+	padding: 3rem 1rem;
+}
+
+.b2bora-pc-notice {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: 6px;
+	background: var(--b2bora-pc-primary-light);
+	color: var(--b2bora-pc-primary);
+}
+
+.b2bora-pc-notice.b2bora-pc-notice-error {
+	background: #fdecea;
+	color: var(--b2bora-pc-negative);
+}
+
+/* Admin screens */
+.b2bora-pc-admin-cards {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1rem;
+	margin: 1.5rem 0;
+}
+
+@media (max-width: 900px) {
+	.b2bora-pc-admin-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.b2bora-pc-admin-card {
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 6px;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.b2bora-pc-admin-card-label {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	color: #6b7280;
+}
+
+.b2bora-pc-admin-card-value {
+	font-size: 1.6rem;
+	font-weight: 700;
+}
+
+.b2bora-pc-inline-form {
+	display: inline-block;
+	margin-right: 0.25rem;
+}
