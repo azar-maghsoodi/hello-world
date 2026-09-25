@@ -18,6 +18,24 @@ class B2Bora_PC_Admin {
 	const MENU_SLUG = 'b2bora-pc-dashboard';
 
 	/**
+	 * Render a signed, colour-coded points value (e.g. "+450" in the
+	 * "earned" colour, "-2000" in the "spent" colour) as safe HTML. Used
+	 * by every admin screen that lists ledger transactions, so the
+	 * formatting rule lives in exactly one place.
+	 *
+	 * @param int $points Signed point delta.
+	 *
+	 * @return string Escaped HTML.
+	 */
+	public static function format_points_html( $points ) {
+		$points = (int) $points;
+		$class  = $points >= 0 ? 'b2bora-pc-positive' : 'b2bora-pc-negative';
+		$value  = ( $points >= 0 ? '+' : '' ) . number_format_i18n( $points );
+
+		return '<span class="' . esc_attr( $class ) . '">' . esc_html( $value ) . '</span>';
+	}
+
+	/**
 	 * Register WordPress hooks.
 	 */
 	public static function init() {
@@ -37,6 +55,7 @@ class B2Bora_PC_Admin {
 			'use_redemption',
 			'cancel_redemption',
 			'reinstall_tables',
+			'repair_balance',
 		);
 
 		foreach ( $actions as $action ) {
@@ -335,5 +354,24 @@ class B2Bora_PC_Admin {
 		B2Bora_PC_Database::install();
 
 		self::redirect( 'b2bora-pc-tools', array( 'updated' => 1 ) );
+	}
+
+	/**
+	 * Repair a single customer's balance from the Reconcile Balances
+	 * report. Requires an explicit reason, exactly like a manual
+	 * adjustment, and creates a normal auditable ledger transaction -
+	 * never a silent balance edit.
+	 */
+	public static function handle_repair_balance() {
+		B2Bora_PC_Security::verify_admin_request( 'repair_balance' );
+
+		$user_id = B2Bora_PC_Security::sanitize_user_id( isset( $_POST['user_id'] ) ? $_POST['user_id'] : 0 );
+		$reason  = isset( $_POST['reason'] ) ? sanitize_text_field( wp_unslash( $_POST['reason'] ) ) : '';
+
+		if ( $user_id && '' !== $reason ) {
+			B2Bora_PC_Points::repair_balance( $user_id, $reason );
+		}
+
+		self::redirect( 'b2bora-pc-tools', array( 'tab' => 'reconcile', 'updated' => 1 ) );
 	}
 }

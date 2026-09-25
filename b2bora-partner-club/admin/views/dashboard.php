@@ -68,9 +68,7 @@ $recent_transactions  = B2Bora_PC_Points::get_recent_transactions( 10 );
 						<?php endif; ?>
 					</td>
 					<td><?php echo esc_html( $row['type'] ); ?></td>
-					<td class="<?php echo $row['points'] >= 0 ? 'b2bora-pc-positive' : 'b2bora-pc-negative'; ?>">
-						<?php echo esc_html( ( $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
-					</td>
+					<td><?php echo B2Bora_PC_Admin::format_points_html( $row['points'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped by format_points_html(). ?></td>
 					<td><?php echo esc_html( number_format_i18n( (int) $row['balance_after'] ) ); ?></td>
 					<td><?php echo esc_html( $row['description'] ); ?></td>
 				</tr>

@@ -25,7 +25,18 @@ class B2Bora_PC_Shortcodes {
 	/**
 	 * Enqueue the dashboard CSS/JS only on pages that actually use the
 	 * shortcode, keeping the footprint on the rest of the (Ekomart) site
-	 * at zero.
+	 * at zero. This must run on `wp_enqueue_scripts` (before `wp_head`)
+	 * rather than from inside render_dashboard() itself: styles enqueued
+	 * after `wp_head` has already fired are never printed, since only
+	 * scripts (not styles) get a second pass at `wp_footer`.
+	 *
+	 * Detecting "does this page use the shortcode" ahead of time is not
+	 * just a plain `has_shortcode( $post->post_content, ... )` check:
+	 * B2Bora builds pages with Elementor, which stores its content as
+	 * JSON in the `_elementor_data` post meta rather than in
+	 * `post_content` - a shortcode added via Elementor's own Shortcode
+	 * widget would never be found by `has_shortcode()` alone. This checks
+	 * both.
 	 */
 	public static function maybe_enqueue_assets() {
 		if ( ! is_singular() ) {
@@ -33,7 +44,7 @@ class B2Bora_PC_Shortcodes {
 		}
 
 		global $post;
-		if ( ! $post || ! has_shortcode( $post->post_content, 'b2bora_partner_club' ) ) {
+		if ( ! $post || ! self::page_contains_shortcode( $post ) ) {
 			return;
 		}
 
@@ -52,6 +63,24 @@ class B2Bora_PC_Shortcodes {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Whether a given post's content - through the normal editor or
+	 * through Elementor - contains the [b2bora_partner_club] shortcode.
+	 *
+	 * @param WP_Post $post Post object.
+	 *
+	 * @return bool
+	 */
+	private static function page_contains_shortcode( $post ) {
+		if ( has_shortcode( (string) $post->post_content, 'b2bora_partner_club' ) ) {
+			return true;
+		}
+
+		$elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
+
+		return is_string( $elementor_data ) && false !== strpos( $elementor_data, 'b2bora_partner_club' );
 	}
 
 	/**

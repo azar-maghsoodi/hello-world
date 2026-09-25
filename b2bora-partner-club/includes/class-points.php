@@ -182,57 +182,80 @@ class B2Bora_PC_Points {
 		global $wpdb;
 		$table = B2Bora_PC_Database::transactions_table();
 
-		// Serialise balance reads/writes per request using a DB transaction
-		// so two near-simultaneous requests for the same user cannot both
-		// read the same starting balance.
-		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		/*
+		 * Concurrency safety: a plain "SELECT ... FOR UPDATE" against the
+		 * user's last ledger row only locks a row that already exists. For
+		 * a user's very first-ever transaction there is no row yet, so two
+		 * concurrent requests (e.g. an order-completed webhook firing
+		 * alongside a welcome-bonus check) could both read a starting
+		 * balance of 0 and race. A MySQL named lock closes that gap: it
+		 * blocks on the user id itself, not on a row, so it is held even
+		 * before the user has any ledger rows at all.
+		 */
+		$lock_name  = 'b2bora_pc_user_' . $user_id;
+		$got_lock   = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		$current_balance = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT balance_after FROM {$table} WHERE user_id = %d ORDER BY id DESC LIMIT 1 FOR UPDATE", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$user_id
-			)
-		);
-		$current_balance = null === $current_balance ? 0 : (int) $current_balance;
-		$new_balance      = $current_balance + $points;
-
-		if ( $new_balance < 0 && ! $allow_negative ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			B2Bora_PC_Logger::warning( "Rejected transaction that would leave user #{$user_id} with a negative balance ({$new_balance})." );
+		if ( 1 !== $got_lock ) {
+			B2Bora_PC_Logger::error( "Could not acquire a lock for user #{$user_id}; another request is still writing to their ledger." );
 			return false;
 		}
 
-		$inserted = $wpdb->insert(
-			$table,
-			array(
-				'user_id'       => $user_id,
-				'order_id'      => $order_id,
-				'type'          => $type,
-				'points'        => $points,
-				'balance_after' => $new_balance,
-				'description'   => $description,
-				'reference_key' => $reference_key,
-				'created_at'    => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%s', '%d', '%d', '%s', '%s', '%s' )
-		);
+		try {
+			// Serialise balance reads/writes per request using a DB
+			// transaction as well, so the row itself is locked once it
+			// does exist (belt and suspenders alongside the named lock
+			// above, and required for the ROLLBACK/COMMIT semantics below).
+			$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		if ( false === $inserted ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$current_balance = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT balance_after FROM {$table} WHERE user_id = %d ORDER BY id DESC LIMIT 1 FOR UPDATE", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$user_id
+				)
+			);
+			$current_balance = null === $current_balance ? 0 : (int) $current_balance;
+			$new_balance      = $current_balance + $points;
 
-			// A duplicate-key error here means a concurrent request won the
-			// race on the same reference_key; treat it as an already
-			// recorded event rather than a hard failure.
-			if ( $reference_key && false !== strpos( (string) $wpdb->last_error, 'Duplicate entry' ) ) {
-				B2Bora_PC_Logger::info( "Concurrent duplicate transaction avoided for reference '{$reference_key}'." );
+			if ( $new_balance < 0 && ! $allow_negative ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				B2Bora_PC_Logger::warning( "Rejected transaction that would leave user #{$user_id} with a negative balance ({$new_balance})." );
 				return false;
 			}
 
-			B2Bora_PC_Logger::error( "Failed to insert points transaction for user #{$user_id}: {$wpdb->last_error}" );
-			return false;
-		}
+			$inserted = $wpdb->insert(
+				$table,
+				array(
+					'user_id'       => $user_id,
+					'order_id'      => $order_id,
+					'type'          => $type,
+					'points'        => $points,
+					'balance_after' => $new_balance,
+					'description'   => $description,
+					'reference_key' => $reference_key,
+					'created_at'    => current_time( 'mysql' ),
+				),
+				array( '%d', '%d', '%s', '%d', '%d', '%s', '%s', '%s' )
+			);
 
-		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			if ( false === $inserted ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+				// A duplicate-key error here means a concurrent request won
+				// the race on the same reference_key; treat it as an
+				// already recorded event rather than a hard failure.
+				if ( $reference_key && false !== strpos( (string) $wpdb->last_error, 'Duplicate entry' ) ) {
+					B2Bora_PC_Logger::info( "Concurrent duplicate transaction avoided for reference '{$reference_key}'." );
+					return false;
+				}
+
+				B2Bora_PC_Logger::error( "Failed to insert points transaction for user #{$user_id}: {$wpdb->last_error}" );
+				return false;
+			}
+
+			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		}
 
 		$transaction_id = (int) $wpdb->insert_id;
 
@@ -369,6 +392,176 @@ class B2Bora_PC_Points {
 				sanitize_key( $type )
 			)
 		);
+	}
+
+	/**
+	 * Sum of points already recorded for a given order + transaction type,
+	 * as an absolute value. Used to cap cumulative refund reversals so
+	 * multiple partial refunds on the same order can never reverse more
+	 * points in total than the order originally awarded.
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $type     Transaction type.
+	 *
+	 * @return int
+	 */
+	public static function get_absolute_sum_for_order_and_type( $order_id, $type ) {
+		$order_id = absint( $order_id );
+		if ( ! $order_id ) {
+			return 0;
+		}
+
+		global $wpdb;
+		$table = B2Bora_PC_Database::transactions_table();
+
+		$sum = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(points) FROM {$table} WHERE order_id = %d AND type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$order_id,
+				sanitize_key( $type )
+			)
+		);
+
+		return null === $sum ? 0 : abs( (int) $sum );
+	}
+
+	/**
+	 * Prefix used for the reference_key of a balance-repair transaction
+	 * created by the admin "Reconcile Balances" tool.
+	 */
+	const REPAIR_REFERENCE_PREFIX = 'balance_repair_';
+
+	/**
+	 * Recompute a user's balance from scratch, independently of the
+	 * incrementally-maintained `balance_after` column, by summing every
+	 * ledger row's own `points` value. Used by the admin
+	 * balance-reconciliation tool: the two values should always agree,
+	 * and a mismatch indicates a bug (e.g. a historical race condition
+	 * before the per-user locking in record_transaction() was added) or
+	 * manual database tampering.
+	 *
+	 * If a prior balance-repair transaction exists for this user, the
+	 * recompute is anchored to it (baseline = that repair's own
+	 * balance_after, plus only the points recorded since) rather than
+	 * summing from the very first row. Without this anchor, summing every
+	 * row unconditionally would immediately "re-detect" the very drift a
+	 * repair just fixed, since the repair transaction is itself a real
+	 * ledger row with a nonzero point value — the anchor is what makes
+	 * repeated reconciliation runs converge after a repair instead of
+	 * flagging the same historical drift forever.
+	 *
+	 * @param int $user_id User ID.
+	 *
+	 * @return int
+	 */
+	public static function get_recomputed_balance( $user_id ) {
+		$user_id = absint( $user_id );
+		if ( ! $user_id ) {
+			return 0;
+		}
+
+		global $wpdb;
+		$table = B2Bora_PC_Database::transactions_table();
+
+		$anchor = self::get_last_repair_transaction( $user_id );
+
+		if ( $anchor ) {
+			$sum = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT SUM(points) FROM {$table} WHERE user_id = %d AND id > %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$user_id,
+					(int) $anchor['id']
+				)
+			);
+
+			return (int) $anchor['balance_after'] + ( null === $sum ? 0 : (int) $sum );
+		}
+
+		$sum = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(points) FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id
+			)
+		);
+
+		return null === $sum ? 0 : (int) $sum;
+	}
+
+	/**
+	 * Most recent balance-repair transaction for a user, if any.
+	 *
+	 * @param int $user_id User ID.
+	 *
+	 * @return array|null
+	 */
+	private static function get_last_repair_transaction( $user_id ) {
+		global $wpdb;
+		$table = B2Bora_PC_Database::transactions_table();
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE user_id = %d AND reference_key LIKE %s ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id,
+				$wpdb->esc_like( self::REPAIR_REFERENCE_PREFIX ) . '%'
+			),
+			ARRAY_A
+		);
+
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Repair a user's balance by creating a single auditable
+	 * manual_adjustment transaction that brings the cached/recorded
+	 * balance (get_balance()) back in line with the independently
+	 * recomputed ledger balance (get_recomputed_balance()). Never
+	 * modifies any existing row.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $reason  Required human-readable reason (who approved this and why).
+	 *
+	 * @return int|false Transaction ID on success, false if nothing needed repairing or the write failed.
+	 */
+	public static function repair_balance( $user_id, $reason ) {
+		$user_id = B2Bora_PC_Security::sanitize_user_id( $user_id );
+		if ( ! $user_id || '' === trim( (string) $reason ) ) {
+			return false;
+		}
+
+		$ledger_balance   = self::get_recomputed_balance( $user_id );
+		$recorded_balance = self::get_balance( $user_id );
+		$difference       = $ledger_balance - $recorded_balance;
+
+		if ( 0 === $difference ) {
+			return false;
+		}
+
+		return self::record_transaction(
+			$user_id,
+			self::TYPE_MANUAL,
+			$difference,
+			array(
+				'reference_key'  => self::REPAIR_REFERENCE_PREFIX . $user_id . '_' . time(),
+				/* translators: 1: reason given by the admin */
+				'description'    => sprintf( __( 'Balance reconciliation repair: %s', 'b2bora-partner-club' ), sanitize_text_field( $reason ) ),
+				'allow_negative' => true, // A repair must be able to correct a balance that was wrongly positive too.
+			)
+		);
+	}
+
+	/**
+	 * Every distinct user_id that has at least one ledger row, for the
+	 * reconciliation report.
+	 *
+	 * @return int[]
+	 */
+	public static function get_all_member_ids() {
+		global $wpdb;
+		$table = B2Bora_PC_Database::transactions_table();
+
+		$ids = $wpdb->get_col( "SELECT DISTINCT user_id FROM {$table} ORDER BY user_id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return array_map( 'absint', is_array( $ids ) ? $ids : array() );
 	}
 
 	/**

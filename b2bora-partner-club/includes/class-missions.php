@@ -284,18 +284,40 @@ class B2Bora_PC_Missions {
 	}
 
 	/**
-	 * Count distinct product "brands" on an order. Looks for a
-	 * `product_brand` taxonomy (the common convention used by brand
-	 * plugins); falls back to product categories if no brand taxonomy is
-	 * registered on the site. Sites with a different brand taxonomy name
-	 * can adjust this via the `b2bora_pc_brand_taxonomy` filter.
+	 * Count distinct product "brands" on an order.
+	 *
+	 * NOT VERIFIED: as of this writing, none of the plugins active on
+	 * B2Bora (WooCommerce core, Polylang, Elementor, Rank Math, Easy
+	 * Currency, Themewant Product Gallery) were found to register a brand
+	 * taxonomy, and the actual product catalogue was not inspected to
+	 * confirm whether brand is modelled as a taxonomy at all (vs. a plain
+	 * attribute, a category, or nothing). This tries the two most common
+	 * WooCommerce conventions in order - a dedicated `product_brand`
+	 * taxonomy (used by several brand plugins), then the attribute
+	 * taxonomy WooCommerce would auto-create for a "Brand" product
+	 * attribute (`pa_brand`) - before falling back to product categories,
+	 * which are almost certainly the wrong grouping for "brand variety"
+	 * but are guaranteed to exist. Do not enable a `brand_count` mission
+	 * in production before confirming which of these (if any) matches the
+	 * real catalogue, or supplying the right one via the
+	 * `b2bora_pc_brand_taxonomy` filter.
 	 *
 	 * @param WC_Order $order Order object.
 	 *
 	 * @return int
 	 */
 	private static function count_distinct_brands( $order ) {
-		$taxonomy = apply_filters( 'b2bora_pc_brand_taxonomy', taxonomy_exists( 'product_brand' ) ? 'product_brand' : 'product_cat' );
+		$candidates = array( 'product_brand', 'pa_brand', 'product_cat' );
+		$default    = 'product_cat';
+
+		foreach ( $candidates as $candidate ) {
+			if ( taxonomy_exists( $candidate ) ) {
+				$default = $candidate;
+				break;
+			}
+		}
+
+		$taxonomy = apply_filters( 'b2bora_pc_brand_taxonomy', $default );
 
 		$terms = array();
 
@@ -317,29 +339,37 @@ class B2Bora_PC_Missions {
 	}
 
 	/**
-	 * Whether an order should be treated as a "pallet" order. B2Bora
-	 * distinguishes box vs. pallet ordering formats; the exact meta key
-	 * used by the B2B order plugin was not accessible during development,
-	 * so this checks a filterable order meta key with a sane default and
-	 * documents the assumption. Adjust `b2bora_pc_pallet_order_meta_key`
-	 * (and/or hook into `b2bora_pc_mission_completed` directly) to match
-	 * the real field once confirmed.
+	 * Whether an order should be treated as a "pallet" order.
+	 *
+	 * NOT VERIFIED - this cannot be detected reliably today. The B2B Cart
+	 * to Order plugin's source was inspected directly (class-b2b-
+	 * product-fields.php): it stores `_b2b_bax`, `_b2b_case` and
+	 * `_b2b_pallet` as free-text *product* meta ("Bax/Case/Pallet
+	 * packaging information", plain text inputs, not validated as
+	 * numeric) describing how that product is packaged - there is no
+	 * per-*order* field anywhere in that plugin recording whether a given
+	 * order/request was placed "by the box" vs. "by the pallet". A
+	 * previous version of this file guessed at an order meta key
+	 * (`_b2bora_order_format`) that does not actually exist anywhere in
+	 * the installed plugin; that guess has been removed.
+	 *
+	 * Until B2Bora defines and records this distinction somewhere (e.g. a
+	 * future field on the order, or a rule based on the per-product
+	 * `_b2b_pallet` text once its format is standardised), the only
+	 * available proxy is total quantity ordered, which is a rough
+	 * heuristic and not a verified business rule. Do not enable a
+	 * `pallet_order` mission in production without deciding on and
+	 * testing a real rule first - either raise this with whoever
+	 * maintains B2B Cart to Order, or supply an accurate check via the
+	 * `b2bora_pc_mission_completed` filter, which runs instead of this
+	 * method entirely when it returns a non-null-equivalent value.
 	 *
 	 * @param WC_Order $order Order object.
 	 *
 	 * @return bool
 	 */
 	private static function order_is_pallet_order( $order ) {
-		$meta_key = apply_filters( 'b2bora_pc_pallet_order_meta_key', '_b2bora_order_format' );
-		$value    = $order->get_meta( $meta_key );
-
-		if ( '' !== $value ) {
-			return 'pallet' === strtolower( (string) $value );
-		}
-
-		// Fallback heuristic while the real meta key is unconfirmed: treat
-		// large-quantity orders as pallet orders.
-		$threshold     = (int) apply_filters( 'b2bora_pc_pallet_order_quantity_threshold', 50 );
+		$threshold      = (int) apply_filters( 'b2bora_pc_pallet_order_quantity_threshold', 50 );
 		$total_quantity = 0;
 
 		foreach ( $order->get_items() as $item ) {

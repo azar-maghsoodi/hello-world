@@ -85,6 +85,9 @@ class B2Bora_PC_Orders {
 		$previous_order_transaction = B2Bora_PC_Points::get_last_transaction_of_type( $user_id, B2Bora_PC_Points::TYPE_ORDER );
 		$is_first_order              = null === $previous_order_transaction;
 
+		$currency = $order->get_currency();
+		self::maybe_warn_about_currency_mismatch( $order_id, $currency );
+
 		$eligible_amount = self::get_eligible_order_amount( $order );
 		$points          = self::calculate_points_for_amount( $eligible_amount );
 
@@ -92,8 +95,6 @@ class B2Bora_PC_Orders {
 			B2Bora_PC_Logger::info( "Order #{$order_id} has no eligible amount ({$eligible_amount}); no points awarded." );
 			return;
 		}
-
-		$currency = $order->get_currency();
 
 		$transaction_id = B2Bora_PC_Points::record_transaction(
 			$user_id,
@@ -135,6 +136,36 @@ class B2Bora_PC_Orders {
 		 * @param int $points   Points awarded for the order itself.
 		 */
 		do_action( 'b2bora_pc_order_points_awarded', $order_id, $user_id, $points );
+	}
+
+	/**
+	 * NOT VERIFIED: whether "Easy Currency" (active on B2Bora) changes the
+	 * actual stored order currency/total for orders placed while browsing
+	 * in a non-base currency, or only changes the front-end display. This
+	 * plugin applies one flat "points per currency unit" rate with no
+	 * conversion (per spec: "Currency conversion should not be silently
+	 * performed"), which is only correct if every order is always stored
+	 * in the shop's own base currency. Rather than guess, this logs a
+	 * clearly visible warning the first time an order in a different
+	 * currency is seen, so a real occurrence is caught and investigated
+	 * instead of silently mis-awarding points at the wrong rate.
+	 *
+	 * @param int    $order_id Order ID, for the log message.
+	 * @param string $currency Order's currency code.
+	 */
+	private static function maybe_warn_about_currency_mismatch( $order_id, $currency ) {
+		if ( ! function_exists( 'get_woocommerce_currency' ) ) {
+			return;
+		}
+
+		$base_currency = get_woocommerce_currency();
+
+		if ( $currency && $base_currency && $currency !== $base_currency ) {
+			B2Bora_PC_Logger::warning(
+				"Order #{$order_id} is in currency '{$currency}' but the store's base currency is '{$base_currency}'. " .
+				'Points are calculated on the raw order total with no currency conversion - verify this order\'s totals are actually in the base currency (e.g. a multi-currency plugin only changing display) before trusting the awarded points.'
+			);
+		}
 	}
 
 	/**
@@ -265,9 +296,17 @@ class B2Bora_PC_Orders {
 		$refunded_amount = abs( (float) $refund->get_amount() );
 		$refunded_amount = min( $refunded_amount, $order_eligible_amount );
 
-		$points_awarded          = (int) $original['points'];
-		$proportional_points     = (int) floor( ( $refunded_amount / $order_eligible_amount ) * $points_awarded );
-		$proportional_points     = min( $proportional_points, $points_awarded );
+		$points_awarded      = (int) $original['points'];
+		$proportional_points = (int) floor( ( $refunded_amount / $order_eligible_amount ) * $points_awarded );
+
+		// Cap this reversal so that, across any number of separate partial
+		// refunds on the same order, the cumulative amount reversed can
+		// never exceed the points that order originally awarded (e.g. a
+		// duplicate refund event or an over-refund beyond the order total
+		// must not push the reversal past what was actually awarded).
+		$already_reversed = B2Bora_PC_Points::get_absolute_sum_for_order_and_type( $order_id, B2Bora_PC_Points::TYPE_REFUND );
+		$remaining        = max( 0, $points_awarded - $already_reversed );
+		$proportional_points = min( $proportional_points, $remaining );
 
 		if ( $proportional_points <= 0 ) {
 			return;

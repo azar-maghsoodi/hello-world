@@ -47,7 +47,20 @@ class B2Bora_PC_Settings {
 			'reorder_window_days'         => 30,
 
 			// Integration.
-			'enable_wc_completed_fallback' => 0, // Off by default: B2Bora's own workflow should fire b2bora_order_completed.
+			// Verified against the installed B2B Cart to Order plugin
+			// (v6.0.0, inspected directly): it has no "confirmation" hook
+			// of its own — a WooCommerce order (when its "Create
+			// WooCommerce Order" setting is on) is created already in
+			// "Processing" status the moment the request is sent, and
+			// nothing in that plugin ever moves it further. The only
+			// reliable "genuinely confirmed" signal available today is
+			// staff manually marking the order "Completed" in
+			// WooCommerce -> Orders after reviewing/fulfilling it, so the
+			// fallback is on by default. If a future version of B2B Cart
+			// to Order (or a different plugin) adds its own confirmation
+			// action, fire `b2bora_order_completed` from that instead and
+			// turn this back off to avoid double integration paths.
+			'enable_wc_completed_fallback' => 1,
 			'enable_refund_reversal'       => 1,
 
 			// Expiration.
@@ -122,7 +135,7 @@ class B2Bora_PC_Settings {
 		foreach ( $defaults as $key => $default_value ) {
 			if ( ! array_key_exists( $key, $input ) ) {
 				// Checkboxes are absent from $_POST when unchecked.
-				$sanitized[ $key ] = is_int( $default_value ) && in_array( $key, self::boolean_keys(), true ) ? 0 : $default_value;
+				$sanitized[ $key ] = in_array( $key, self::boolean_keys(), true ) ? 0 : $default_value;
 				continue;
 			}
 

@@ -34,7 +34,11 @@ $tables = array(
 );
 
 foreach ( $tables as $table ) {
-	$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	// $table is built from $wpdb->prefix plus a fixed literal suffix, not
+	// user input, so direct interpolation is safe here. `%i` (identifier
+	// placeholders in $wpdb->prepare()) requires WordPress 6.2+, but this
+	// plugin supports 6.0+, so it is intentionally not used.
+	$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 }
 
 delete_option( 'b2bora_pc_settings' );

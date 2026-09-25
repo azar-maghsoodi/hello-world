@@ -72,6 +72,24 @@ function b2bora_pc_load_files() {
 b2bora_pc_load_files();
 
 /**
+ * Declare compatibility with WooCommerce's custom order tables (HPOS).
+ * The plugin never queries wp_posts/wp_postmeta directly for orders -
+ * every read goes through wc_get_order()/WC_Order's own CRUD methods
+ * (see class-orders.php) - so it is compatible whether HPOS is enabled
+ * or the site still uses the legacy posts-table storage.
+ */
+function b2bora_pc_declare_hpos_compatibility() {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+			'custom_order_tables',
+			B2BORA_PC_FILE,
+			true
+		);
+	}
+}
+add_action( 'before_woocommerce_init', 'b2bora_pc_declare_hpos_compatibility' );
+
+/**
  * Boot the plugin once all plugins are loaded, so we can reliably detect
  * WooCommerce and other dependencies.
  */

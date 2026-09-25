@@ -174,11 +174,21 @@ class B2Bora_Test_WPDB {
 
 	public function get_charset_collate() { return ''; }
 
+	public function esc_like( $text ) {
+		return addcslashes( (string) $text, '_%\\' );
+	}
+
 	public function query( $sql ) {
 		$sql = trim( $sql );
 		if ( in_array( strtoupper( $sql ), array( 'START TRANSACTION', 'COMMIT', 'ROLLBACK' ), true ) ) {
 			// SQLite transactions aren't exercised in this single-process
 			// synchronous test run; treat as a no-op boundary.
+			return true;
+		}
+
+		if ( 0 === stripos( $sql, 'SELECT RELEASE_LOCK' ) ) {
+			// This single-process test run has no real concurrency to
+			// guard against; the named lock is a no-op here.
 			return true;
 		}
 
@@ -191,7 +201,17 @@ class B2Bora_Test_WPDB {
 	}
 
 	private function translate( $sql ) {
-		return preg_replace( '/\s+FOR UPDATE\s*$/i', '', $sql );
+		$sql = preg_replace( '/\s+FOR UPDATE\s*$/i', '', $sql );
+
+		// Unlike MySQL, SQLite does not treat backslash as the default
+		// LIKE escape character, so a pattern built with $wpdb->esc_like()
+		// (which backslash-escapes _ and %) needs an explicit ESCAPE
+		// clause here to behave the same as it does on the real site.
+		if ( false !== stripos( $sql, ' LIKE ' ) && false === stripos( $sql, 'ESCAPE' ) ) {
+			$sql = preg_replace( '/(LIKE\s+\'(?:[^\'\\\\]|\\\\.)*\')/i', '$1 ESCAPE \'\\\\\'', $sql );
+		}
+
+		return $sql;
 	}
 
 	public function prepare( $query, ...$args ) {
@@ -227,9 +247,20 @@ class B2Bora_Test_WPDB {
 	}
 
 	public function get_var( $sql ) {
+		if ( 0 === stripos( $sql, 'SELECT GET_LOCK' ) ) {
+			// No real concurrency in this single-process test run: the
+			// named lock is always immediately available.
+			return 1;
+		}
+
 		$stmt = $this->pdo->query( $this->translate( $sql ) );
 		$row  = $stmt ? $stmt->fetch( PDO::FETCH_NUM ) : false;
 		return $row ? $row[0] : null;
+	}
+
+	public function get_col( $sql ) {
+		$stmt = $this->pdo->query( $this->translate( $sql ) );
+		return $stmt ? $stmt->fetchAll( PDO::FETCH_COLUMN, 0 ) : array();
 	}
 
 	public function get_row( $sql, $output = ARRAY_A ) {

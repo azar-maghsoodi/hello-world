@@ -81,9 +81,7 @@ $redemptions = B2Bora_PC_Redemptions::get_for_user( $user_id, 20 );
 				<tr>
 					<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $row['created_at'] ) ); ?></td>
 					<td><?php echo esc_html( $row['type'] ); ?></td>
-					<td class="<?php echo $row['points'] >= 0 ? 'b2bora-pc-positive' : 'b2bora-pc-negative'; ?>">
-						<?php echo esc_html( ( $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
-					</td>
+					<td><?php echo B2Bora_PC_Admin::format_points_html( $row['points'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped by format_points_html(). ?></td>
 					<td><?php echo esc_html( number_format_i18n( (int) $row['balance_after'] ) ); ?></td>
 					<td><?php echo esc_html( $row['description'] ); ?></td>
 				</tr>

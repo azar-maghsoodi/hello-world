@@ -285,6 +285,191 @@ function test_negative_balance_is_never_allowed() {
 }
 
 // ---------------------------------------------------------------------
+// Reorder-bonus boundary conditions.
+// ---------------------------------------------------------------------
+function test_reorder_bonus_boundary_29_days() {
+	b2bora_test_register_user( 1 );
+	b2bora_make_order( 1001, 1, 100.00 );
+	B2Bora_PC_Orders::handle_order_completed( 1001 );
+
+	$GLOBALS['b2bora_test_now'] += 29 * DAY_IN_SECONDS;
+
+	b2bora_make_order( 1002, 1, 100.00 );
+	B2Bora_PC_Orders::handle_order_completed( 1002 );
+
+	assert_true( B2Bora_PC_Points::reference_exists( 'reorder_bonus_order_1002' ), '29 days is within the 30 day window' );
+}
+
+function test_reorder_bonus_boundary_exactly_30_days() {
+	b2bora_test_register_user( 1 );
+	b2bora_make_order( 1001, 1, 100.00 );
+	B2Bora_PC_Orders::handle_order_completed( 1001 );
+
+	$GLOBALS['b2bora_test_now'] += 30 * DAY_IN_SECONDS;
+
+	b2bora_make_order( 1002, 1, 100.00 );
+	B2Bora_PC_Orders::handle_order_completed( 1002 );
+
+	assert_true( B2Bora_PC_Points::reference_exists( 'reorder_bonus_order_1002' ), 'exactly 30 days is still within the (inclusive) window' );
+}
+
+// ---------------------------------------------------------------------
+// Multiple partial refunds on the same order (Phase 9 audit addition).
+// ---------------------------------------------------------------------
+function test_multiple_partial_refunds_never_exceed_original_points() {
+	b2bora_test_register_user( 1 );
+	b2bora_make_order( 1060, 1, 500.00 ); // 500 points.
+	B2Bora_PC_Orders::handle_order_completed( 1060 );
+
+	$order = wc_get_order( 1060 );
+
+	// First partial refund: -100 of 500.
+	$order->total_refunded = 100.00;
+	b2bora_test_register_order( new WC_Order_Refund( 9101, -100.00 ) );
+	B2Bora_PC_Orders::handle_order_refunded( 1060, 9101 );
+
+	// Second, separate partial refund: another -100 (cumulative 200 of 500).
+	$order->total_refunded = 200.00;
+	b2bora_test_register_order( new WC_Order_Refund( 9102, -100.00 ) );
+	B2Bora_PC_Orders::handle_order_refunded( 1060, 9102 );
+
+	assert_equal( 500 - 200, B2Bora_PC_Points::get_balance( 1 ) - 500 /* welcome bonus */, 'two partial refunds reverse a cumulative 200 points' );
+
+	// A third, over-sized "refund" that would push cumulative reversal
+	// past what the order ever awarded must be capped at the remainder.
+	$order->total_refunded = 700.00; // More than the order's own total - should never happen, but must not over-reverse.
+	b2bora_test_register_order( new WC_Order_Refund( 9103, -500.00 ) );
+	B2Bora_PC_Orders::handle_order_refunded( 1060, 9103 );
+
+	$total_reversed = B2Bora_PC_Points::get_absolute_sum_for_order_and_type( 1060, B2Bora_PC_Points::TYPE_REFUND );
+	assert_equal( 500, $total_reversed, 'cumulative reversal is capped at the 500 points the order originally awarded' );
+}
+
+// ---------------------------------------------------------------------
+// Redemption edge cases.
+// ---------------------------------------------------------------------
+function test_redeem_rejects_invalid_reward_id() {
+	b2bora_test_register_user( 1 );
+	B2Bora_PC_Points::record_transaction( 1, B2Bora_PC_Points::TYPE_MANUAL, 5000, array( 'description' => 'seed' ) );
+
+	$result = B2Bora_PC_Redemptions::redeem( 1, 999999 );
+
+	assert_true( is_wp_error( $result ), 'redeeming a non-existent reward id is rejected' );
+	assert_equal( 5000, B2Bora_PC_Points::get_balance( 1 ), 'balance untouched' );
+}
+
+function test_second_redemption_fails_once_balance_is_depleted() {
+	b2bora_test_register_user( 1 );
+	B2Bora_PC_Points::record_transaction( 1, B2Bora_PC_Points::TYPE_MANUAL, 2000, array( 'description' => 'seed' ) );
+	$reward_id = B2Bora_PC_Rewards::save_reward( array( 'name' => '€20 Order Credit', 'points_cost' => 2000, 'reward_type' => 'order_credit', 'reward_value' => 20 ) );
+
+	$first  = B2Bora_PC_Redemptions::redeem( 1, $reward_id );
+	$second = B2Bora_PC_Redemptions::redeem( 1, $reward_id );
+
+	assert_true( ! is_wp_error( $first ), 'first redemption succeeds' );
+	assert_true( is_wp_error( $second ), 'second redemption on the same (now empty) balance is rejected, never double-deducted' );
+	assert_equal( 0, B2Bora_PC_Points::get_balance( 1 ), 'balance cannot go negative from a rapid repeat redemption' );
+}
+
+// ---------------------------------------------------------------------
+// Manual adjustment.
+// ---------------------------------------------------------------------
+function test_manual_adjustment_requires_a_reason() {
+	b2bora_test_register_user( 1 );
+
+	$result = B2Bora_Partner_Club_Loyalty::manual_adjustment( 1, 500, '' );
+
+	assert_true( false === $result, 'a manual adjustment without a reason is rejected' );
+	assert_equal( 0, B2Bora_PC_Points::get_balance( 1 ), 'no points were added' );
+}
+
+function test_unauthorized_manual_adjustment_is_blocked_by_capability_check() {
+	$source = file_get_contents( B2BORA_PC_PATH . 'includes/class-admin.php' );
+	preg_match( '/function handle_manual_adjustment\(\).*?\n\t\}/s', $source, $matches );
+
+	assert_true( ! empty( $matches ), 'handle_manual_adjustment() exists' );
+	assert_true( false !== strpos( $matches[0], "verify_admin_request( 'manual_adjustment' )" ), 'manual adjustment is gated by a capability + nonce check before touching any points' );
+}
+
+// ---------------------------------------------------------------------
+// AJAX surface area (Phase 15: unauthorized customer data access).
+// ---------------------------------------------------------------------
+function test_ajax_exposes_only_the_redeem_action() {
+	$source = file_get_contents( B2BORA_PC_PATH . 'public/class-ajax.php' );
+
+	assert_true( 1 === preg_match_all( '/add_action\(\s*[\'"]wp_ajax_/', $source ), 'exactly one wp_ajax_ handler is registered' );
+	assert_true( 0 === preg_match_all( '/add_action\(\s*[\'"]wp_ajax_nopriv_/', $source ), 'no AJAX action is reachable while logged out (redemption requires an account)' );
+	assert_true( false === strpos( $source, 'get_history' ) && false === strpos( $source, 'get_for_user' ), 'no AJAX action exposes another customer\'s transaction/redemption history' );
+}
+
+// ---------------------------------------------------------------------
+// Database schema formatting (Phase 18: "database installation").
+// dbDelta() itself requires a real WordPress + MySQL environment (see
+// tests/README.md); this statically verifies the SQL strings follow
+// dbDelta's well-known, easy-to-get-wrong formatting rules instead.
+// ---------------------------------------------------------------------
+function test_dbdelta_schema_strings_are_correctly_formatted() {
+	$source = file_get_contents( B2BORA_PC_PATH . 'includes/class-database.php' );
+
+	assert_true( (bool) preg_match_all( '/CREATE TABLE/', $source, $m ) && count( $m[0] ) === 5, 'defines exactly 5 tables' );
+
+	// dbDelta requires exactly two spaces between "PRIMARY KEY" and the
+	// column list, or it silently fails to detect/create the index.
+	assert_true( 0 === preg_match( '/PRIMARY KEY {1}\(/', $source ), 'no PRIMARY KEY definition has only one space (dbDelta would ignore it)' );
+	assert_true( 5 === substr_count( $source, 'PRIMARY KEY  (id)' ), 'every table declares its PRIMARY KEY with the two-space spacing dbDelta requires' );
+}
+
+// ---------------------------------------------------------------------
+// Balance reconciliation (Phase 5 audit addition).
+// ---------------------------------------------------------------------
+function test_reconciliation_detects_and_repairs_a_corrupted_balance() {
+	b2bora_test_register_user( 1 );
+
+	B2Bora_PC_Points::record_transaction( 1, B2Bora_PC_Points::TYPE_MANUAL, 500, array( 'description' => 'row 1' ) );
+
+	// Simulate the historical race-condition bug directly: insert a row
+	// whose points are real (+300) but whose cached balance_after was
+	// computed from a stale prior balance (as if two requests raced),
+	// bypassing record_transaction() the way a bug or manual edit would.
+	global $wpdb;
+	$wpdb->insert(
+		B2Bora_PC_Database::transactions_table(),
+		array(
+			'user_id'       => 1,
+			'order_id'      => null,
+			'type'          => 'order',
+			'points'        => 300,
+			'balance_after' => 300, // Should have been 800 (500 + 300).
+			'description'   => 'corrupted row',
+			'reference_key' => 'order_points_9999',
+			'created_at'    => current_time( 'mysql' ),
+		),
+		array( '%d', '%d', '%s', '%d', '%d', '%s', '%s', '%s' )
+	);
+
+	assert_equal( 300, B2Bora_PC_Points::get_balance( 1 ), 'recorded (cached) balance reflects the corrupted row' );
+	assert_equal( 800, B2Bora_PC_Points::get_recomputed_balance( 1 ), 'independently recomputed ledger balance is correct' );
+
+	$repaired = B2Bora_PC_Points::repair_balance( 1, 'test repair' );
+	assert_true( false !== $repaired, 'repair creates a transaction' );
+	assert_equal( 800, B2Bora_PC_Points::get_balance( 1 ), 'recorded balance now matches the ledger total' );
+
+	// Re-running reconciliation immediately after a repair must converge
+	// (not re-flag the same historical drift forever) thanks to the
+	// repair-anchored recompute.
+	assert_equal( B2Bora_PC_Points::get_balance( 1 ), B2Bora_PC_Points::get_recomputed_balance( 1 ), 'reconciliation converges after repair' );
+
+	// A second repair attempt with nothing left to fix is a safe no-op.
+	assert_true( false === B2Bora_PC_Points::repair_balance( 1, 'test repair again' ), 'repairing an already-consistent balance is a no-op' );
+
+	// New activity after the repair is still tracked correctly.
+	b2bora_test_register_user( 1 );
+	b2bora_make_order( 3001, 1, 50.00 );
+	B2Bora_PC_Orders::handle_order_completed( 3001 );
+	assert_equal( B2Bora_PC_Points::get_balance( 1 ), B2Bora_PC_Points::get_recomputed_balance( 1 ), 'reconciliation still matches after new activity post-repair' );
+}
+
+// ---------------------------------------------------------------------
 // 12 & 16 (structural safeguards, see tests/README.md for scope notes).
 // ---------------------------------------------------------------------
 function test_ajax_handler_never_trusts_a_client_supplied_user_id() {

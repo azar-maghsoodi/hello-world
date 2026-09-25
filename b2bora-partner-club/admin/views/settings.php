@@ -67,7 +67,7 @@ $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommer
 				<th><?php esc_html_e( 'WooCommerce fallback', 'b2bora-partner-club' ); ?></th>
 				<td>
 					<label><input type="checkbox" name="b2bora_pc[enable_wc_completed_fallback]" value="1" <?php checked( $settings['enable_wc_completed_fallback'] ); ?> /> <?php esc_html_e( 'Also award points when a standard WooCommerce order transitions to "Completed".', 'b2bora-partner-club' ); ?></label>
-					<p class="description"><?php esc_html_e( 'Leave disabled if B2Bora orders are always confirmed through the b2bora_order_completed action instead of the standard checkout flow.', 'b2bora-partner-club' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Enabled by default: the installed B2B Cart to Order plugin has no confirmation event of its own, so staff manually marking an order "Completed" in WooCommerce -> Orders is the genuine confirmation signal today. Turn this off only if B2B Cart to Order (or another plugin) is updated to fire b2bora_order_completed at its own real confirmation point.', 'b2bora-partner-club' ); ?></p>
 				</td>
 			</tr>
 			<tr>
