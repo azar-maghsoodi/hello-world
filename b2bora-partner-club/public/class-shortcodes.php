@@ -54,6 +54,16 @@ class B2Bora_PC_Shortcodes {
 		$classes[] = 'woocommerce-page';
 		$classes[] = 'woocommerce-account';
 
+		// The active theme's own account-page styling (the white card,
+		// green buttons, 2-column login/register layout) is scoped to
+		// "body.ekomart-wc.woocommerce-account" specifically, not just
+		// "woocommerce-account" - confirmed by reading the theme's real
+		// woocommerce.css. Every other rule using .ekomart-wc also
+		// requires a second class we are not adding here (.woocommerce,
+		// .single-product, .woocommerce-cart, .woocommerce-checkout), so
+		// this only switches on the account-page block, nothing else.
+		$classes[] = 'ekomart-wc';
+
 		return $classes;
 	}
 
