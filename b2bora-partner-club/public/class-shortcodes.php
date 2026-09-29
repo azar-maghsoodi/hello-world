@@ -20,6 +20,41 @@ class B2Bora_PC_Shortcodes {
 	public static function init() {
 		add_shortcode( 'b2bora_partner_club', array( __CLASS__, 'render_dashboard' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_assets' ) );
+		add_filter( 'body_class', array( __CLASS__, 'maybe_add_account_body_class' ) );
+	}
+
+	/**
+	 * Add WooCommerce's own "woocommerce-page"/"woocommerce-account" body
+	 * classes on pages that show the shortcode's logged-out login/register
+	 * form. Confirmed by comparing this site's real /my-account/ page
+	 * markup against the shortcode's output: the form HTML and the
+	 * WooCommerce/theme stylesheets are identical on both, but the real
+	 * account page's <body> carries these two extra classes and this
+	 * page's does not - the theme's account-page CSS is scoped to them,
+	 * which is why the embedded form otherwise renders unstyled. Must run
+	 * on the `body_class` filter (fired in the theme header, before the
+	 * page content/shortcode itself executes) rather than from inside
+	 * render_dashboard(), which runs too late to affect the already-output
+	 * body tag.
+	 *
+	 * @param string[] $classes Existing body classes.
+	 *
+	 * @return string[]
+	 */
+	public static function maybe_add_account_body_class( $classes ) {
+		if ( is_user_logged_in() ) {
+			return $classes;
+		}
+
+		$post = get_queried_object();
+		if ( ! ( $post instanceof WP_Post ) || ! self::page_contains_shortcode( $post ) ) {
+			return $classes;
+		}
+
+		$classes[] = 'woocommerce-page';
+		$classes[] = 'woocommerce-account';
+
+		return $classes;
 	}
 
 	/**
