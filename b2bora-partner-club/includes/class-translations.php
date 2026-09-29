@@ -123,7 +123,7 @@ class B2Bora_PC_Translations {
 				'label'   => __( 'Fallback name for a deleted reward', 'b2bora-partner-club' ),
 			),
 			'logged_out_message'       => array(
-				'default' => __( 'Please log in to view your B2Bora Partner Club dashboard.', 'b2bora-partner-club' ),
+				'default' => __( 'Already have an account? Log in below. If you don\'t have one yet, please register first, then log in to access this page.', 'b2bora-partner-club' ),
 				'label'   => __( 'Logged-out message', 'b2bora-partner-club' ),
 			),
 			'login_button'             => array(
