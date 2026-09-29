@@ -368,23 +368,29 @@ class B2Bora_PC_Orders {
 
 	/**
 	 * Convert an eligible currency amount into integer points using the
-	 * configured rate. Arithmetic is done in integer minor units (cents)
-	 * to avoid floating point drift; the single float->int conversion is
-	 * an intentional, unavoidable rounding of the monetary amount, not of
-	 * the points themselves.
+	 * configured rate. The rate itself is a ratio of two integers -
+	 * "points_per_amount points per currency_amount_for_points units of
+	 * currency" - which lets an admin express a fractional rate (e.g. 1
+	 * point per 3 lei) exactly, without either setting field ever being a
+	 * float. Arithmetic is done in integer minor units (cents) throughout;
+	 * the single float->int conversion of the monetary amount itself is
+	 * intentional and unavoidable, but no floating point is used for the
+	 * rate or the resulting points.
 	 *
 	 * @param float $amount Eligible amount in major currency units.
 	 *
 	 * @return int
 	 */
 	public static function calculate_points_for_amount( $amount ) {
-		$rate = absint( B2Bora_PC_Settings::get( 'points_per_currency_unit', 1 ) );
-		if ( $rate <= 0 || $amount <= 0 ) {
+		$numerator   = absint( B2Bora_PC_Settings::get( 'points_per_amount', 1 ) );
+		$denominator = max( 1, absint( B2Bora_PC_Settings::get( 'currency_amount_for_points', 1 ) ) );
+
+		if ( $numerator <= 0 || $amount <= 0 ) {
 			return 0;
 		}
 
 		$amount_cents = (int) round( $amount * 100 );
 
-		return intdiv( $amount_cents * $rate, 100 );
+		return intdiv( $amount_cents * $numerator, 100 * $denominator );
 	}
 }

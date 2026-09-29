@@ -285,6 +285,41 @@ function test_negative_balance_is_never_allowed() {
 }
 
 // ---------------------------------------------------------------------
+// Points rate ratio (fractional rates without floating point).
+// ---------------------------------------------------------------------
+function test_fractional_points_rate_via_ratio() {
+	B2Bora_PC_Settings::update( array( 'points_per_amount' => 1, 'currency_amount_for_points' => 3 ) );
+
+	// 1 point per 3 units: 300 units -> exactly 100 points.
+	assert_equal( 100, B2Bora_PC_Orders::calculate_points_for_amount( 300 ), '1 point per 3 units on an exact multiple' );
+
+	// 299 units -> floors to 99 points, never rounds up or uses a float.
+	assert_equal( 99, B2Bora_PC_Orders::calculate_points_for_amount( 299 ), '1 point per 3 units floors correctly on a non-exact multiple' );
+}
+
+function test_points_rate_ratio_matches_old_single_rate_behaviour() {
+	// The default 1-per-1 ratio must behave exactly like the old flat rate.
+	B2Bora_PC_Settings::update( array( 'points_per_amount' => 400, 'currency_amount_for_points' => 1 ) );
+
+	assert_equal( 400, B2Bora_PC_Orders::calculate_points_for_amount( 1 ), '400 points per 1 unit on a 1-unit order' );
+	assert_equal( 200, B2Bora_PC_Orders::calculate_points_for_amount( 0.5 ), '400 points per 1 unit on a half-unit order matches the €0.50 = 200 points example' );
+}
+
+function test_legacy_points_rate_setting_migrates_on_read() {
+	// Simulate a site that saved settings before the ratio existed: only
+	// the old single-integer key is in the stored option.
+	update_option( B2Bora_PC_Settings::OPTION_KEY, array( 'points_per_currency_unit' => 400 ) );
+
+	$ref = new ReflectionProperty( 'B2Bora_PC_Settings', 'cache' );
+	$ref->setAccessible( true );
+	$ref->setValue( null, null );
+
+	assert_equal( 400, B2Bora_PC_Settings::get( 'points_per_amount' ), 'legacy rate is migrated into points_per_amount on read' );
+	assert_equal( 1, B2Bora_PC_Settings::get( 'currency_amount_for_points' ), 'legacy rate migrates with a denominator of 1 (equivalent ratio)' );
+	assert_equal( 400, B2Bora_PC_Orders::calculate_points_for_amount( 1 ), 'the migrated rate is actually used for the real calculation' );
+}
+
+// ---------------------------------------------------------------------
 // Reorder-bonus boundary conditions.
 // ---------------------------------------------------------------------
 function test_reorder_bonus_boundary_29_days() {

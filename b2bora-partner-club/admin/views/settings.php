@@ -26,10 +26,16 @@ $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommer
 		<h2><?php esc_html_e( 'Points Earning', 'b2bora-partner-club' ); ?></h2>
 		<table class="form-table">
 			<tr>
-				<th><label for="points_per_currency_unit"><?php esc_html_e( 'Points per currency unit', 'b2bora-partner-club' ); ?></label></th>
+				<th><label for="points_per_amount"><?php esc_html_e( 'Points earning rate', 'b2bora-partner-club' ); ?></label></th>
 				<td>
-					<input type="number" id="points_per_currency_unit" name="b2bora_pc[points_per_currency_unit]" min="0" step="1" value="<?php echo esc_attr( $settings['points_per_currency_unit'] ); ?>" />
-					<p class="description"><?php echo esc_html( sprintf( /* translators: %s: currency symbol, if WooCommerce is active */ __( 'Integer points awarded per 1 unit of eligible order value%s.', 'b2bora-partner-club' ), $currency ? ' (' . $currency . ')' : '' ) ); ?></p>
+					<input type="number" id="points_per_amount" name="b2bora_pc[points_per_amount]" min="0" step="1" style="width:100px;" value="<?php echo esc_attr( $settings['points_per_amount'] ); ?>" />
+					<?php esc_html_e( 'points per', 'b2bora-partner-club' ); ?>
+					<input type="number" id="currency_amount_for_points" name="b2bora_pc[currency_amount_for_points]" min="1" step="1" style="width:100px;" value="<?php echo esc_attr( $settings['currency_amount_for_points'] ); ?>" />
+					<?php echo esc_html( $currency ? $currency : __( 'currency unit(s)', 'b2bora-partner-club' ) ); ?>
+					<p class="description">
+						<?php esc_html_e( 'Both fields are whole numbers, but together they can express any rate, including a fractional one - e.g. 1 point per 3 units instead of needing a decimal like 0.33.', 'b2bora-partner-club' ); ?>
+						<?php echo esc_html( sprintf( /* translators: 1: points, 2: currency amount, 3: currency symbol */ __( 'Current rate: %1$s points per %2$s%3$s of eligible order value.', 'b2bora-partner-club' ), number_format_i18n( $settings['points_per_amount'] ), number_format_i18n( $settings['currency_amount_for_points'] ), $currency ) ); ?>
+					</p>
 				</td>
 			</tr>
 			<tr>
