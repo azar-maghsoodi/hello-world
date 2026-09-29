@@ -94,7 +94,21 @@ class B2Bora_PC_Shortcodes {
 			?>
 			<div class="b2bora-pc-dashboard b2bora-pc-logged-out">
 				<p><?php echo esc_html( B2Bora_PC_Translations::get( 'logged_out_message' ) ); ?></p>
-				<a class="b2bora-pc-button" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php echo esc_html( B2Bora_PC_Translations::get( 'login_button' ) ); ?></a>
+				<?php if ( shortcode_exists( 'woocommerce_my_account' ) ) : ?>
+					<div class="b2bora-pc-login-form">
+						<?php
+						// WooCommerce's own login/register form (the exact
+						// same one the store's My Account page uses), so it
+						// inherits the theme's styling and, if the store
+						// allows account creation, shows a register form
+						// alongside login - rather than sending the visitor
+						// away to wp-login.php.
+						echo do_shortcode( '[woocommerce_my_account]' );
+						?>
+					</div>
+				<?php else : ?>
+					<a class="b2bora-pc-button" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php echo esc_html( B2Bora_PC_Translations::get( 'login_button' ) ); ?></a>
+				<?php endif; ?>
 			</div>
 			<?php
 			return ob_get_clean();
