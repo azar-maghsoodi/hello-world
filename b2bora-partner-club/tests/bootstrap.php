@@ -57,6 +57,7 @@ function is_wp_error( $thing ) {
 function absint( $n ) { return abs( (int) $n ); }
 function sanitize_text_field( $s ) { return trim( (string) $s ); }
 function sanitize_key( $s ) { return strtolower( preg_replace( '/[^a-z0-9_\-]/i', '', (string) $s ) ); }
+function sanitize_title( $s ) { return trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( (string) $s ) ), '-' ); }
 function sanitize_email( $s ) { return filter_var( trim( (string) $s ), FILTER_SANITIZE_EMAIL ); }
 function wp_kses_post( $s ) { return (string) $s; }
 function wp_json_encode( $data, $options = 0 ) { return json_encode( $data, $options ); }
@@ -407,9 +408,11 @@ class B2Bora_Test_Product {
 class B2Bora_Test_Order_Item {
 	private $product;
 	private $qty;
-	public function __construct( $product, $qty = 1 ) { $this->product = $product; $this->qty = $qty; }
+	private $meta;
+	public function __construct( $product, $qty = 1, $meta = array() ) { $this->product = $product; $this->qty = $qty; $this->meta = $meta; }
 	public function get_product() { return $this->product; }
 	public function get_quantity() { return $this->qty; }
+	public function get_meta( $key, $single = true ) { return $this->meta[ $key ] ?? ''; }
 }
 
 class WC_Abstract_Order {}
@@ -479,6 +482,7 @@ require_once B2BORA_PC_PATH . 'includes/class-multilang.php';
 require_once B2BORA_PC_PATH . 'includes/class-database.php';
 require_once B2BORA_PC_PATH . 'includes/class-points.php';
 require_once B2BORA_PC_PATH . 'includes/class-levels.php';
+require_once B2BORA_PC_PATH . 'includes/class-reward-types.php';
 require_once B2BORA_PC_PATH . 'includes/class-rewards.php';
 require_once B2BORA_PC_PATH . 'includes/class-redemptions.php';
 require_once B2BORA_PC_PATH . 'includes/class-missions.php';

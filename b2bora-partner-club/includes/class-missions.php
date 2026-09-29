@@ -341,41 +341,41 @@ class B2Bora_PC_Missions {
 	/**
 	 * Whether an order should be treated as a "pallet" order.
 	 *
-	 * NOT VERIFIED - this cannot be detected reliably today. The B2B Cart
-	 * to Order plugin's source was inspected directly (class-b2b-
-	 * product-fields.php): it stores `_b2b_bax`, `_b2b_case` and
-	 * `_b2b_pallet` as free-text *product* meta ("Bax/Case/Pallet
-	 * packaging information", plain text inputs, not validated as
-	 * numeric) describing how that product is packaged - there is no
-	 * per-*order* field anywhere in that plugin recording whether a given
-	 * order/request was placed "by the box" vs. "by the pallet". A
-	 * previous version of this file guessed at an order meta key
-	 * (`_b2bora_order_format`) that does not actually exist anywhere in
-	 * the installed plugin; that guess has been removed.
+	 * VERIFIED against the real catalogue: products use a WooCommerce
+	 * "Pack" attribute (taxonomy `pa_pack`) with terms for single unit
+	 * (Bucata/Unit), case (Bax/Box) and pallet (Palet/Pallet) - the
+	 * Romanian and English names exist as separate terms rather than
+	 * Polylang-linked translations of one term, so both spellings are
+	 * checked. WooCommerce records the chosen term directly on each
+	 * order line item as meta under the bare attribute key `pa_pack`
+	 * (confirmed against real order data), so this reads that meta
+	 * rather than re-deriving it from the variation product, which also
+	 * keeps working correctly if a variation is later deleted or
+	 * changed.
 	 *
-	 * Until B2Bora defines and records this distinction somewhere (e.g. a
-	 * future field on the order, or a rule based on the per-product
-	 * `_b2b_pallet` text once its format is standardised), the only
-	 * available proxy is total quantity ordered, which is a rough
-	 * heuristic and not a verified business rule. Do not enable a
-	 * `pallet_order` mission in production without deciding on and
-	 * testing a real rule first - either raise this with whoever
-	 * maintains B2B Cart to Order, or supply an accurate check via the
-	 * `b2bora_pc_mission_completed` filter, which runs instead of this
-	 * method entirely when it returns a non-null-equivalent value.
+	 * A mission using this type completes the first time a customer's
+	 * order contains at least one line item bought as a pallet.
 	 *
 	 * @param WC_Order $order Order object.
 	 *
 	 * @return bool
 	 */
 	private static function order_is_pallet_order( $order ) {
-		$threshold      = (int) apply_filters( 'b2bora_pc_pallet_order_quantity_threshold', 50 );
-		$total_quantity = 0;
+		$meta_key      = (string) apply_filters( 'b2bora_pc_pallet_pack_attribute', 'pa_pack' );
+		$pallet_values = (array) apply_filters( 'b2bora_pc_pallet_pack_values', array( 'palet', 'pallet' ) );
 
 		foreach ( $order->get_items() as $item ) {
-			$total_quantity += (int) $item->get_quantity();
+			$value = $item->get_meta( $meta_key, true );
+
+			if ( '' === $value || null === $value ) {
+				continue;
+			}
+
+			if ( in_array( strtolower( (string) $value ), $pallet_values, true ) ) {
+				return true;
+			}
 		}
 
-		return $total_quantity >= $threshold;
+		return false;
 	}
 }

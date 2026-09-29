@@ -261,6 +261,63 @@ function test_mission_completion_is_idempotent() {
 }
 
 // ---------------------------------------------------------------------
+// 12b. Pallet order mission: detected from the real "Pack" attribute
+// (pa_pack = palet/pallet) recorded on an order line item, not a
+// quantity guess.
+// ---------------------------------------------------------------------
+function test_pallet_order_mission_completes_when_a_pallet_pack_is_bought() {
+	b2bora_test_register_user( 1 );
+
+	$mission_id = B2Bora_PC_Missions::save_mission( array(
+		'name'         => 'Pallet Order',
+		'type'         => B2Bora_PC_Missions::TYPE_PALLET_ORDER,
+		'bonus_points' => 400,
+	) );
+
+	$order = b2bora_make_order( 4001, 1, 900.00 );
+	$order->items[] = new B2Bora_Test_Order_Item( new B2Bora_Test_Product( 101 ), 1, array( 'pa_pack' => 'palet' ) );
+
+	B2Bora_PC_Missions::evaluate_for_order( 1, 4001, $order );
+
+	assert_true( B2Bora_PC_Missions::is_completed_by_user( $mission_id, 1 ), 'pallet mission completes when a line item has pa_pack = palet' );
+}
+
+function test_pallet_order_mission_matches_the_english_pack_term_too() {
+	b2bora_test_register_user( 1 );
+
+	$mission_id = B2Bora_PC_Missions::save_mission( array(
+		'name'         => 'Pallet Order',
+		'type'         => B2Bora_PC_Missions::TYPE_PALLET_ORDER,
+		'bonus_points' => 400,
+	) );
+
+	$order = b2bora_make_order( 4002, 1, 900.00 );
+	$order->items[] = new B2Bora_Test_Order_Item( new B2Bora_Test_Product( 102 ), 1, array( 'pa_pack' => 'pallet' ) );
+
+	B2Bora_PC_Missions::evaluate_for_order( 1, 4002, $order );
+
+	assert_true( B2Bora_PC_Missions::is_completed_by_user( $mission_id, 1 ), 'pallet mission also completes for the English "pallet" term slug' );
+}
+
+function test_pallet_order_mission_does_not_complete_for_box_or_unit_packs() {
+	b2bora_test_register_user( 1 );
+
+	$mission_id = B2Bora_PC_Missions::save_mission( array(
+		'name'         => 'Pallet Order',
+		'type'         => B2Bora_PC_Missions::TYPE_PALLET_ORDER,
+		'bonus_points' => 400,
+	) );
+
+	$order = b2bora_make_order( 4003, 1, 900.00 );
+	$order->items[] = new B2Bora_Test_Order_Item( new B2Bora_Test_Product( 103 ), 60, array( 'pa_pack' => 'bucata' ) );
+	$order->items[] = new B2Bora_Test_Order_Item( new B2Bora_Test_Product( 104 ), 60, array( 'pa_pack' => 'bax' ) );
+
+	B2Bora_PC_Missions::evaluate_for_order( 1, 4003, $order );
+
+	assert_true( ! B2Bora_PC_Missions::is_completed_by_user( $mission_id, 1 ), 'a large order made only of unit/case packs is not a pallet order, however many units it totals' );
+}
+
+// ---------------------------------------------------------------------
 // 13. Invalid user IDs are rejected.
 // ---------------------------------------------------------------------
 function test_invalid_user_ids_are_rejected() {
@@ -641,7 +698,7 @@ function test_multilang_content_is_translated_through_the_dashboard() {
 				'ro' => 'Transport Gratuit',
 			),
 			'points_cost'  => 100,
-			'reward_type'  => B2Bora_PC_Rewards::TYPE_ORDER_CREDIT,
+			'reward_type'  => 'order_credit',
 			'reward_value' => 5,
 			'active'       => 1,
 		)
@@ -651,4 +708,91 @@ function test_multilang_content_is_translated_through_the_dashboard() {
 	$reward = B2Bora_PC_Rewards::get_reward( $reward_id );
 	assert_equal( 'Free Shipping', B2Bora_PC_Multilang::decode( $reward['name'], 'en' ), 'stored reward name decodes correctly for en' );
 	assert_equal( 'Transport Gratuit', B2Bora_PC_Multilang::decode( $reward['name'], 'ro' ), 'stored reward name decodes correctly for ro' );
+}
+
+// ---------------------------------------------------------------------
+// Reward Types: admin-manageable list backing the "Reward Type"
+// dropdown, seeded once from the plugin's original three built-in
+// types so pre-existing rewards keep resolving correctly.
+// ---------------------------------------------------------------------
+function test_reward_types_are_seeded_with_the_original_three_on_first_read() {
+	$types = B2Bora_PC_Reward_Types::get_types();
+
+	assert_equal(
+		array( 'order_credit', 'free_box', 'partner_offer' ),
+		array_keys( $types ),
+		'a fresh install still offers exactly the original three reward types'
+	);
+}
+
+function test_reward_types_can_be_added_and_are_unique() {
+	$slug = B2Bora_PC_Reward_Types::add_type( 'Gift Card' );
+	assert_true( false !== $slug, 'adding a new type succeeds' );
+
+	$types = B2Bora_PC_Reward_Types::get_types();
+	assert_equal( 'Gift Card', $types[ $slug ], 'the new type is stored with its label' );
+
+	$second_slug = B2Bora_PC_Reward_Types::add_type( 'Gift Card' );
+	assert_true( $slug !== $second_slug, 'adding the same label twice gets a distinct slug rather than colliding' );
+}
+
+function test_reward_types_add_rejects_an_empty_label() {
+	assert_true( false === B2Bora_PC_Reward_Types::add_type( '   ' ), 'a blank label is rejected' );
+}
+
+function test_reward_types_can_be_renamed_without_changing_their_slug() {
+	$slug = B2Bora_PC_Reward_Types::add_type( 'Gift Card' );
+
+	b2bora_test_register_user( 1 );
+	$reward_id = B2Bora_PC_Rewards::save_reward( array( 'name' => 'Amazon Voucher', 'points_cost' => 500, 'reward_type' => $slug ) );
+
+	assert_true( B2Bora_PC_Reward_Types::rename_type( $slug, 'Digital Gift Card' ), 'rename succeeds' );
+
+	$types = B2Bora_PC_Reward_Types::get_types();
+	assert_equal( 'Digital Gift Card', $types[ $slug ], 'the label changed' );
+
+	$reward = B2Bora_PC_Rewards::get_reward( $reward_id );
+	assert_equal( $slug, $reward['reward_type'], 'the reward still points at the same (unchanged) slug after the rename' );
+}
+
+function test_reward_types_cannot_be_deleted_while_in_use() {
+	$slug = B2Bora_PC_Reward_Types::add_type( 'Gift Card' );
+
+	b2bora_test_register_user( 1 );
+	B2Bora_PC_Rewards::save_reward( array( 'name' => 'Amazon Voucher', 'points_cost' => 500, 'reward_type' => $slug ) );
+
+	assert_true( false === B2Bora_PC_Reward_Types::delete_type( $slug ), 'a type still used by a reward cannot be deleted' );
+	assert_true( array_key_exists( $slug, B2Bora_PC_Reward_Types::get_types() ), 'the type is still there' );
+}
+
+function test_reward_types_can_be_deleted_once_unused() {
+	$slug = B2Bora_PC_Reward_Types::add_type( 'Gift Card' );
+
+	assert_true( B2Bora_PC_Reward_Types::delete_type( $slug ), 'an unused type can be deleted' );
+	assert_true( ! array_key_exists( $slug, B2Bora_PC_Reward_Types::get_types() ), 'the type is gone' );
+}
+
+function test_reward_types_last_remaining_type_cannot_be_deleted() {
+	$types = B2Bora_PC_Reward_Types::get_types();
+	foreach ( array_keys( $types ) as $slug ) {
+		if ( $slug !== array_key_last( $types ) ) {
+			B2Bora_PC_Reward_Types::delete_type( $slug );
+		}
+	}
+
+	$remaining = B2Bora_PC_Reward_Types::get_types();
+	assert_equal( 1, count( $remaining ), 'down to exactly one type' );
+
+	$last_slug = array_key_first( $remaining );
+	assert_true( false === B2Bora_PC_Reward_Types::delete_type( $last_slug ), 'the last remaining type cannot be deleted, so the dropdown is never empty' );
+}
+
+function test_saving_a_reward_with_an_unknown_type_falls_back_to_a_real_type() {
+	b2bora_test_register_user( 1 );
+
+	$reward_id = B2Bora_PC_Rewards::save_reward( array( 'name' => 'Mystery Reward', 'points_cost' => 100, 'reward_type' => 'not_a_real_type' ) );
+	assert_true( false !== $reward_id, 'save still succeeds' );
+
+	$reward = B2Bora_PC_Rewards::get_reward( $reward_id );
+	assert_true( array_key_exists( $reward['reward_type'], B2Bora_PC_Reward_Types::get_types() ), 'an unrecognised type falls back to one that actually exists' );
 }

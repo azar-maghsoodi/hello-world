@@ -47,6 +47,7 @@ function b2bora_pc_load_files() {
 		'includes/class-database.php',
 		'includes/class-points.php',
 		'includes/class-levels.php',
+		'includes/class-reward-types.php',
 		'includes/class-rewards.php',
 		'includes/class-redemptions.php',
 		'includes/class-missions.php',

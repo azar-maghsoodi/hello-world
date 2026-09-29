@@ -46,6 +46,8 @@ class B2Bora_PC_Admin {
 			'save_settings',
 			'save_reward',
 			'delete_reward',
+			'save_reward_type',
+			'delete_reward_type',
 			'save_level',
 			'delete_level',
 			'save_mission',
@@ -244,6 +246,46 @@ class B2Bora_PC_Admin {
 		}
 
 		self::redirect( 'b2bora-pc-rewards', array( 'deleted' => 1 ) );
+	}
+
+	/**
+	 * Handle create/rename of a reward type. A `slug` in the request
+	 * means "rename this existing type"; no slug means "add a new type
+	 * from this label".
+	 */
+	public static function handle_save_reward_type() {
+		B2Bora_PC_Security::verify_admin_request( 'reward_type' );
+
+		$label = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
+		$slug  = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+
+		if ( '' !== $slug ) {
+			$ok = B2Bora_PC_Reward_Types::rename_type( $slug, $label );
+		} else {
+			$ok = false !== B2Bora_PC_Reward_Types::add_type( $label );
+		}
+
+		$args = array( 'tab' => 'types' );
+		$args[ $ok ? 'updated' : 'error' ] = 1;
+
+		self::redirect( 'b2bora-pc-rewards', $args );
+	}
+
+	/**
+	 * Handle reward type deletion. Refused (redirects with an error
+	 * flag) if the type is still used by a reward or is the last
+	 * remaining type - see B2Bora_PC_Reward_Types::delete_type().
+	 */
+	public static function handle_delete_reward_type() {
+		B2Bora_PC_Security::verify_admin_request( 'reward_type' );
+
+		$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+		$ok   = '' !== $slug && B2Bora_PC_Reward_Types::delete_type( $slug );
+
+		$args                              = array( 'tab' => 'types' );
+		$args[ $ok ? 'deleted' : 'error' ] = 1;
+
+		self::redirect( 'b2bora-pc-rewards', $args );
 	}
 
 	/** Handle create/update of a level. */

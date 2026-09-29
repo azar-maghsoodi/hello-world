@@ -1,7 +1,10 @@
 <?php
 /**
- * Rewards catalogue CRUD. V1 reward types: order_credit, free_box,
- * partner_offer. Redemption logic itself lives in B2Bora_PC_Redemptions.
+ * Rewards catalogue CRUD. Reward types are admin-manageable (see
+ * B2Bora_PC_Reward_Types) rather than a fixed list, since reward_type is
+ * purely a display label - nothing here or in B2Bora_PC_Redemptions
+ * branches on its value. Redemption logic itself lives in
+ * B2Bora_PC_Redemptions.
  *
  * @package B2Bora_Partner_Club
  */
@@ -15,20 +18,29 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class B2Bora_PC_Rewards {
 
-	const TYPE_ORDER_CREDIT  = 'order_credit';
-	const TYPE_FREE_BOX      = 'free_box';
-	const TYPE_PARTNER_OFFER = 'partner_offer';
-
 	/**
-	 * Supported reward types and their labels.
+	 * All reward types (admin-manageable), slug => label.
 	 *
-	 * @return array
+	 * @return array<string, string>
 	 */
 	public static function get_types() {
-		return array(
-			self::TYPE_ORDER_CREDIT  => __( 'Order Credit', 'b2bora-partner-club' ),
-			self::TYPE_FREE_BOX      => __( 'Free Box', 'b2bora-partner-club' ),
-			self::TYPE_PARTNER_OFFER => __( 'Partner Offer', 'b2bora-partner-club' ),
+		return B2Bora_PC_Reward_Types::get_types();
+	}
+
+	/**
+	 * How many rewards currently use a given type. Used by
+	 * B2Bora_PC_Reward_Types to refuse deleting a type that's still in use.
+	 *
+	 * @param string $type Type slug.
+	 *
+	 * @return int
+	 */
+	public static function count_by_type( $type ) {
+		global $wpdb;
+		$table = B2Bora_PC_Database::rewards_table();
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE reward_type = %s", sanitize_key( $type ) ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
 	}
 
@@ -85,9 +97,12 @@ class B2Bora_PC_Rewards {
 			return false;
 		}
 
-		$type = isset( $data['reward_type'] ) ? sanitize_key( $data['reward_type'] ) : self::TYPE_ORDER_CREDIT;
-		if ( ! array_key_exists( $type, self::get_types() ) ) {
-			$type = self::TYPE_ORDER_CREDIT;
+		$available_types = self::get_types();
+		$default_type    = (string) array_key_first( $available_types );
+
+		$type = isset( $data['reward_type'] ) ? sanitize_key( $data['reward_type'] ) : $default_type;
+		if ( ! array_key_exists( $type, $available_types ) ) {
+			$type = $default_type;
 		}
 
 		$now = current_time( 'mysql' );

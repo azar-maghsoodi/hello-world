@@ -9,7 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$tab          = isset( $_GET['tab'] ) && 'redemptions' === $_GET['tab'] ? 'redemptions' : 'catalogue'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$valid_tabs   = array( 'catalogue', 'redemptions', 'types' );
+$tab          = isset( $_GET['tab'] ) && in_array( $_GET['tab'], $valid_tabs, true ) ? sanitize_key( $_GET['tab'] ) : 'catalogue'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $edit_id      = isset( $_GET['edit'] ) ? absint( $_GET['edit'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $editing      = $edit_id ? B2Bora_PC_Rewards::get_reward( $edit_id ) : null;
 $rewards      = B2Bora_PC_Rewards::get_rewards();
@@ -18,6 +19,9 @@ $base_url     = admin_url( 'admin.php?page=b2bora-pc-rewards' );
 $languages    = B2Bora_PC_Multilang::get_admin_languages();
 $name_values  = B2Bora_PC_Multilang::get_all( $editing['name'] ?? '' );
 $desc_values  = B2Bora_PC_Multilang::get_all( $editing['description'] ?? '' );
+
+$editing_type_slug  = isset( $_GET['edit_type'] ) ? sanitize_key( $_GET['edit_type'] ) : '';
+$editing_type_label = ( '' !== $editing_type_slug && isset( $types[ $editing_type_slug ] ) ) ? $types[ $editing_type_slug ] : '';
 ?>
 <div class="wrap b2bora-pc-admin">
 	<h1><?php esc_html_e( 'Rewards', 'b2bora-partner-club' ); ?></h1>
@@ -25,9 +29,67 @@ $desc_values  = B2Bora_PC_Multilang::get_all( $editing['description'] ?? '' );
 	<h2 class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( $base_url ); ?>" class="nav-tab <?php echo 'catalogue' === $tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Catalogue', 'b2bora-partner-club' ); ?></a>
 		<a href="<?php echo esc_url( add_query_arg( 'tab', 'redemptions', $base_url ) ); ?>" class="nav-tab <?php echo 'redemptions' === $tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Redemptions', 'b2bora-partner-club' ); ?></a>
+		<a href="<?php echo esc_url( add_query_arg( 'tab', 'types', $base_url ) ); ?>" class="nav-tab <?php echo 'types' === $tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Reward Types', 'b2bora-partner-club' ); ?></a>
 	</h2>
 
-	<?php if ( 'redemptions' === $tab ) : ?>
+	<?php if ( 'types' === $tab ) : ?>
+
+		<?php if ( isset( $_GET['error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+			<div class="notice notice-error"><p><?php esc_html_e( 'Could not save or delete that type. A type cannot be deleted while it is still used by a reward, and at least one type must always remain.', 'b2bora-partner-club' ); ?></p></div>
+		<?php endif; ?>
+
+		<h2><?php echo $editing_type_slug ? esc_html__( 'Rename Reward Type', 'b2bora-partner-club' ) : esc_html__( 'Add New Reward Type', 'b2bora-partner-club' ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="b2bora-pc-admin-form">
+			<?php wp_nonce_field( B2Bora_PC_Security::NONCE_ADMIN_ACTION . '_reward_type' ); ?>
+			<input type="hidden" name="action" value="b2bora_pc_save_reward_type" />
+			<?php if ( $editing_type_slug ) : ?>
+				<input type="hidden" name="slug" value="<?php echo esc_attr( $editing_type_slug ); ?>" />
+			<?php endif; ?>
+			<table class="form-table">
+				<tr>
+					<th><label for="reward-type-label"><?php esc_html_e( 'Label', 'b2bora-partner-club' ); ?></label></th>
+					<td><input type="text" id="reward-type-label" name="label" class="regular-text" required value="<?php echo esc_attr( $editing_type_label ); ?>" /></td>
+				</tr>
+			</table>
+			<?php submit_button( $editing_type_slug ? __( 'Update Type', 'b2bora-partner-club' ) : __( 'Add Type', 'b2bora-partner-club' ) ); ?>
+		</form>
+
+		<h2><?php esc_html_e( 'All Reward Types', 'b2bora-partner-club' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'These are the choices available in the "Reward Type" dropdown when adding or editing a reward.', 'b2bora-partner-club' ); ?></p>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Label', 'b2bora-partner-club' ); ?></th>
+					<th><?php esc_html_e( 'Rewards Using It', 'b2bora-partner-club' ); ?></th>
+					<th><?php esc_html_e( 'Actions', 'b2bora-partner-club' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ( $types as $type_slug => $type_label ) :
+				$usage_count = B2Bora_PC_Rewards::count_by_type( $type_slug );
+				$can_delete  = 0 === $usage_count && count( $types ) > 1;
+				?>
+				<tr>
+					<td><?php echo esc_html( $type_label ); ?></td>
+					<td><?php echo esc_html( number_format_i18n( $usage_count ) ); ?></td>
+					<td>
+						<a href="<?php echo esc_url( add_query_arg( array( 'tab' => 'types', 'edit_type' => $type_slug ), $base_url ) ); ?>"><?php esc_html_e( 'Edit', 'b2bora-partner-club' ); ?></a>
+						<?php if ( $can_delete ) : ?>
+							&nbsp;|&nbsp;
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="b2bora-pc-inline-form" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this reward type permanently?', 'b2bora-partner-club' ) ); ?>');">
+								<?php wp_nonce_field( B2Bora_PC_Security::NONCE_ADMIN_ACTION . '_reward_type' ); ?>
+								<input type="hidden" name="action" value="b2bora_pc_delete_reward_type" />
+								<input type="hidden" name="slug" value="<?php echo esc_attr( $type_slug ); ?>" />
+								<button type="submit" class="button-link button-link-delete"><?php esc_html_e( 'Delete', 'b2bora-partner-club' ); ?></button>
+							</form>
+						<?php endif; ?>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
+
+	<?php elseif ( 'redemptions' === $tab ) : ?>
 
 		<?php $redemptions = B2Bora_PC_Redemptions::get_all(); ?>
 		<table class="widefat striped">
