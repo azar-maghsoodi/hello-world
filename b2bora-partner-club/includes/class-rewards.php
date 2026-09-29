@@ -80,7 +80,7 @@ class B2Bora_PC_Rewards {
 		global $wpdb;
 		$table = B2Bora_PC_Database::rewards_table();
 
-		$name = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
+		$name = isset( $data['name'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['name'], 'sanitize_text_field' ) : '';
 		if ( '' === $name ) {
 			return false;
 		}
@@ -94,7 +94,7 @@ class B2Bora_PC_Rewards {
 
 		$fields = array(
 			'name'         => $name,
-			'description'  => isset( $data['description'] ) ? wp_kses_post( $data['description'] ) : '',
+			'description'  => isset( $data['description'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['description'], 'wp_kses_post' ) : '',
 			'points_cost'  => isset( $data['points_cost'] ) ? absint( $data['points_cost'] ) : 0,
 			'reward_type'  => $type,
 			'reward_value' => isset( $data['reward_value'] ) ? (float) $data['reward_value'] : 0,

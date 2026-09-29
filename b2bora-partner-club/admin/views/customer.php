@@ -37,7 +37,7 @@ $redemptions = B2Bora_PC_Redemptions::get_for_user( $user_id, 20 );
 		&nbsp;|&nbsp;
 		<strong><?php esc_html_e( 'Balance:', 'b2bora-partner-club' ); ?></strong> <?php echo esc_html( number_format_i18n( $balance ) ); ?>
 		&nbsp;|&nbsp;
-		<strong><?php esc_html_e( 'Level:', 'b2bora-partner-club' ); ?></strong> <?php echo esc_html( $progress['current_level'] ? $progress['current_level']['name'] : '—' ); ?>
+		<strong><?php esc_html_e( 'Level:', 'b2bora-partner-club' ); ?></strong> <?php echo esc_html( $progress['current_level'] ? B2Bora_PC_Multilang::decode( $progress['current_level']['name'] ) : '—' ); ?>
 	</p>
 
 	<?php if ( isset( $_GET['updated'] ) ) : ?>
@@ -107,7 +107,7 @@ $redemptions = B2Bora_PC_Redemptions::get_for_user( $user_id, 20 );
 			<?php foreach ( $redemptions as $row ) : ?>
 				<tr>
 					<td><?php echo esc_html( mysql2date( get_option( 'date_format' ), $row['created_at'] ) ); ?></td>
-					<td><?php echo esc_html( $row['reward_name'] ? $row['reward_name'] : __( '(deleted reward)', 'b2bora-partner-club' ) ); ?></td>
+					<td><?php echo esc_html( $row['reward_name'] ? B2Bora_PC_Multilang::decode( $row['reward_name'] ) : __( '(deleted reward)', 'b2bora-partner-club' ) ); ?></td>
 					<td><?php echo esc_html( number_format_i18n( (int) $row['points_spent'] ) ); ?></td>
 					<td><?php echo esc_html( ucfirst( $row['status'] ) ); ?></td>
 				</tr>

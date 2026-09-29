@@ -117,7 +117,7 @@ class B2Bora_PC_Missions {
 		global $wpdb;
 		$table = B2Bora_PC_Database::missions_table();
 
-		$name = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
+		$name = isset( $data['name'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['name'], 'sanitize_text_field' ) : '';
 		if ( '' === $name ) {
 			return false;
 		}
@@ -131,7 +131,7 @@ class B2Bora_PC_Missions {
 
 		$fields = array(
 			'name'         => $name,
-			'description'  => isset( $data['description'] ) ? wp_kses_post( $data['description'] ) : '',
+			'description'  => isset( $data['description'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['description'], 'wp_kses_post' ) : '',
 			'type'         => $type,
 			'target'       => isset( $data['target'] ) ? absint( $data['target'] ) : 0,
 			'bonus_points' => isset( $data['bonus_points'] ) ? absint( $data['bonus_points'] ) : 0,
@@ -221,7 +221,7 @@ class B2Bora_PC_Missions {
 				'order_id'      => $order_id ? absint( $order_id ) : null,
 				'reference_key' => self::reference_key( $mission['id'], $user_id ),
 				/* translators: %s: mission name */
-				'description'   => sprintf( __( 'Mission completed: %s', 'b2bora-partner-club' ), $mission['name'] ),
+				'description'   => sprintf( __( 'Mission completed: %s', 'b2bora-partner-club' ), B2Bora_PC_Multilang::decode( $mission['name'] ) ),
 			)
 		);
 

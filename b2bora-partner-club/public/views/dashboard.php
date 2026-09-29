@@ -23,6 +23,14 @@ $next_level    = $progress['next_level'];
 $t = static function ( $key ) {
 	return B2Bora_PC_Translations::get( $key );
 };
+
+// Reward/level/mission name & description fields are admin-entered
+// content, not fixed plugin labels - they go through Multilang::decode()
+// rather than B2Bora_PC_Translations, since each row can have its own
+// set of saved languages (or none, for older/single-language entries).
+$m = static function ( $raw ) {
+	return B2Bora_PC_Multilang::decode( $raw );
+};
 ?>
 <section class="b2bora-pc-dashboard" aria-label="<?php echo esc_attr( $t( 'dashboard_aria_label' ) ); ?>">
 	<header class="b2bora-pc-header">
@@ -40,7 +48,7 @@ $t = static function ( $key ) {
 				<?php
 				echo esc_html(
 					$current_level
-						? sprintf( $t( 'level_name_format' ), $current_level['name'] )
+						? sprintf( $t( 'level_name_format' ), $m( $current_level['name'] ) )
 						: $t( 'level_name_fallback' )
 				);
 				?>
@@ -56,7 +64,7 @@ $t = static function ( $key ) {
 						sprintf(
 							$t( 'progress_text_format' ),
 							number_format_i18n( $progress['points_needed'] ),
-							$next_level['name'],
+							$m( $next_level['name'] ),
 							$progress['progress_pct']
 						)
 					);
@@ -80,9 +88,9 @@ $t = static function ( $key ) {
 					?>
 					<li class="b2bora-pc-reward-card">
 						<div class="b2bora-pc-reward-info">
-							<span class="b2bora-pc-reward-name"><?php echo esc_html( $reward['name'] ); ?></span>
+							<span class="b2bora-pc-reward-name"><?php echo esc_html( $m( $reward['name'] ) ); ?></span>
 							<?php if ( ! empty( $reward['description'] ) ) : ?>
-								<span class="b2bora-pc-reward-description"><?php echo esc_html( $reward['description'] ); ?></span>
+								<span class="b2bora-pc-reward-description"><?php echo esc_html( $m( $reward['description'] ) ); ?></span>
 							<?php endif; ?>
 							<span class="b2bora-pc-reward-cost"><?php echo esc_html( sprintf( $t( 'reward_points_format' ), number_format_i18n( (int) $reward['points_cost'] ) ) ); ?></span>
 						</div>
@@ -131,9 +139,9 @@ $t = static function ( $key ) {
 					?>
 					<li class="b2bora-pc-mission-item <?php echo $completed ? 'b2bora-pc-mission-completed' : ''; ?>">
 						<div class="b2bora-pc-mission-info">
-							<span class="b2bora-pc-mission-name"><?php echo esc_html( $mission['name'] ); ?></span>
+							<span class="b2bora-pc-mission-name"><?php echo esc_html( $m( $mission['name'] ) ); ?></span>
 							<?php if ( ! empty( $mission['description'] ) ) : ?>
-								<span class="b2bora-pc-mission-description"><?php echo esc_html( $mission['description'] ); ?></span>
+								<span class="b2bora-pc-mission-description"><?php echo esc_html( $m( $mission['description'] ) ); ?></span>
 							<?php endif; ?>
 						</div>
 						<span class="b2bora-pc-mission-bonus">
@@ -160,7 +168,7 @@ $t = static function ( $key ) {
 			<ul class="b2bora-pc-redemptions-list">
 				<?php foreach ( $redemptions as $row ) : ?>
 					<li class="b2bora-pc-redemption-item">
-						<span class="b2bora-pc-redemption-name"><?php echo esc_html( $row['reward_name'] ? $row['reward_name'] : $t( 'redemption_reward_fallback' ) ); ?></span>
+						<span class="b2bora-pc-redemption-name"><?php echo esc_html( $row['reward_name'] ? $m( $row['reward_name'] ) : $t( 'redemption_reward_fallback' ) ); ?></span>
 						<span class="b2bora-pc-redemption-status b2bora-pc-status-<?php echo esc_attr( $row['status'] ); ?>"><?php echo esc_html( ucfirst( $row['status'] ) ); ?></span>
 					</li>
 				<?php endforeach; ?>

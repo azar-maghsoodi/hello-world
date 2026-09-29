@@ -95,6 +95,8 @@ class B2Bora_PC_Redemptions {
 
 		$redemption_id = (int) $wpdb->insert_id;
 
+		$reward_name = B2Bora_PC_Multilang::decode( $reward['name'] );
+
 		$transaction_id = B2Bora_PC_Points::record_transaction(
 			$user_id,
 			B2Bora_PC_Points::TYPE_REDEMPTION,
@@ -102,7 +104,7 @@ class B2Bora_PC_Redemptions {
 			array(
 				'reference_key' => "redemption_{$redemption_id}",
 				/* translators: %s: reward name */
-				'description'   => sprintf( __( 'Redeemed: %s', 'b2bora-partner-club' ), $reward['name'] ),
+				'description'   => sprintf( __( 'Redeemed: %s', 'b2bora-partner-club' ), $reward_name ),
 			)
 		);
 
@@ -117,7 +119,7 @@ class B2Bora_PC_Redemptions {
 
 		delete_transient( $lock_key );
 
-		B2Bora_PC_Logger::info( "User #{$user_id} redeemed reward #{$reward_id} ('{$reward['name']}') for {$cost} points (redemption #{$redemption_id})." );
+		B2Bora_PC_Logger::info( "User #{$user_id} redeemed reward #{$reward_id} ('{$reward_name}') for {$cost} points (redemption #{$redemption_id})." );
 
 		/**
 		 * Fires after a reward has been successfully redeemed.

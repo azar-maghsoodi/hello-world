@@ -59,6 +59,7 @@ function sanitize_text_field( $s ) { return trim( (string) $s ); }
 function sanitize_key( $s ) { return strtolower( preg_replace( '/[^a-z0-9_\-]/i', '', (string) $s ) ); }
 function sanitize_email( $s ) { return filter_var( trim( (string) $s ), FILTER_SANITIZE_EMAIL ); }
 function wp_kses_post( $s ) { return (string) $s; }
+function wp_json_encode( $data, $options = 0 ) { return json_encode( $data, $options ); }
 function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
 function esc_html__( $s, $d = null ) { return $s; }
 function esc_attr( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
@@ -474,6 +475,7 @@ require_once B2BORA_PC_PATH . 'includes/class-security.php';
 require_once B2BORA_PC_PATH . 'includes/class-logger.php';
 require_once B2BORA_PC_PATH . 'includes/class-settings.php';
 require_once B2BORA_PC_PATH . 'includes/class-translations.php';
+require_once B2BORA_PC_PATH . 'includes/class-multilang.php';
 require_once B2BORA_PC_PATH . 'includes/class-database.php';
 require_once B2BORA_PC_PATH . 'includes/class-points.php';
 require_once B2BORA_PC_PATH . 'includes/class-levels.php';

@@ -69,7 +69,7 @@ $users = get_users( $user_query_args );
 					</td>
 					<td><?php echo esc_html( $user->user_email ); ?></td>
 					<td><?php echo esc_html( number_format_i18n( $balance ) ); ?></td>
-					<td><?php echo esc_html( $level ? $level['name'] : '—' ); ?></td>
+					<td><?php echo esc_html( $level ? B2Bora_PC_Multilang::decode( $level['name'] ) : '—' ); ?></td>
 					<td><?php echo esc_html( number_format_i18n( $order_count ) ); ?></td>
 					<td><?php echo esc_html( $last ); ?></td>
 				</tr>

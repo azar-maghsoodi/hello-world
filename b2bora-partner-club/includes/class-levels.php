@@ -65,9 +65,9 @@ class B2Bora_PC_Levels {
 		$table = B2Bora_PC_Database::levels_table();
 
 		$fields = array(
-			'name'           => isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '',
+			'name'           => isset( $data['name'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['name'], 'sanitize_text_field' ) : '',
 			'minimum_points' => isset( $data['minimum_points'] ) ? absint( $data['minimum_points'] ) : 0,
-			'benefits'       => isset( $data['benefits'] ) ? wp_kses_post( $data['benefits'] ) : '',
+			'benefits'       => isset( $data['benefits'] ) ? B2Bora_PC_Multilang::sanitize_input( $data['benefits'], 'wp_kses_post' ) : '',
 			'sort_order'     => isset( $data['sort_order'] ) ? absint( $data['sort_order'] ) : 0,
 			// Default to active when the key is omitted entirely (e.g. a
 			// programmatic caller); admin forms always send an explicit

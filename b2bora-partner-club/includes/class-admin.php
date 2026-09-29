@@ -221,8 +221,8 @@ class B2Bora_PC_Admin {
 
 		$data = array(
 			'id'           => isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0,
-			'name'         => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
-			'description'  => isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '',
+			'name'         => isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '',
+			'description'  => isset( $_POST['description'] ) ? wp_unslash( $_POST['description'] ) : '',
 			'points_cost'  => isset( $_POST['points_cost'] ) ? absint( $_POST['points_cost'] ) : 0,
 			'reward_type'  => isset( $_POST['reward_type'] ) ? sanitize_key( $_POST['reward_type'] ) : '',
 			'reward_value' => isset( $_POST['reward_value'] ) ? (float) $_POST['reward_value'] : 0,
@@ -252,9 +252,9 @@ class B2Bora_PC_Admin {
 
 		$data = array(
 			'id'             => isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0,
-			'name'           => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
+			'name'           => isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '',
 			'minimum_points' => isset( $_POST['minimum_points'] ) ? absint( $_POST['minimum_points'] ) : 0,
-			'benefits'       => isset( $_POST['benefits'] ) ? wp_kses_post( wp_unslash( $_POST['benefits'] ) ) : '',
+			'benefits'       => isset( $_POST['benefits'] ) ? wp_unslash( $_POST['benefits'] ) : '',
 			'sort_order'     => isset( $_POST['sort_order'] ) ? absint( $_POST['sort_order'] ) : 0,
 			'active'         => isset( $_POST['active'] ) ? 1 : 0,
 		);
@@ -281,8 +281,8 @@ class B2Bora_PC_Admin {
 
 		$data = array(
 			'id'           => isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0,
-			'name'         => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
-			'description'  => isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '',
+			'name'         => isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '',
+			'description'  => isset( $_POST['description'] ) ? wp_unslash( $_POST['description'] ) : '',
 			'type'         => isset( $_POST['type'] ) ? sanitize_key( $_POST['type'] ) : '',
 			'target'       => isset( $_POST['target'] ) ? absint( $_POST['target'] ) : 0,
 			'bonus_points' => isset( $_POST['bonus_points'] ) ? absint( $_POST['bonus_points'] ) : 0,

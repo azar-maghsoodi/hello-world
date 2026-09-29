@@ -15,6 +15,9 @@ $editing      = $edit_id ? B2Bora_PC_Rewards::get_reward( $edit_id ) : null;
 $rewards      = B2Bora_PC_Rewards::get_rewards();
 $types        = B2Bora_PC_Rewards::get_types();
 $base_url     = admin_url( 'admin.php?page=b2bora-pc-rewards' );
+$languages    = B2Bora_PC_Multilang::get_admin_languages();
+$name_values  = B2Bora_PC_Multilang::get_all( $editing['name'] ?? '' );
+$desc_values  = B2Bora_PC_Multilang::get_all( $editing['description'] ?? '' );
 ?>
 <div class="wrap b2bora-pc-admin">
 	<h1><?php esc_html_e( 'Rewards', 'b2bora-partner-club' ); ?></h1>
@@ -48,7 +51,7 @@ $base_url     = admin_url( 'admin.php?page=b2bora-pc-rewards' );
 					<tr>
 						<td><?php echo esc_html( mysql2date( get_option( 'date_format' ), $row['created_at'] ) ); ?></td>
 						<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-						<td><?php echo esc_html( $row['reward_name'] ? $row['reward_name'] : __( '(deleted reward)', 'b2bora-partner-club' ) ); ?></td>
+						<td><?php echo esc_html( $row['reward_name'] ? B2Bora_PC_Multilang::decode( $row['reward_name'] ) : __( '(deleted reward)', 'b2bora-partner-club' ) ); ?></td>
 						<td><?php echo esc_html( number_format_i18n( (int) $row['points_spent'] ) ); ?></td>
 						<td><?php echo esc_html( ucfirst( $row['status'] ) ); ?></td>
 						<td>
@@ -94,12 +97,29 @@ $base_url     = admin_url( 'admin.php?page=b2bora-pc-rewards' );
 			<?php endif; ?>
 			<table class="form-table">
 				<tr>
-					<th><label for="name"><?php esc_html_e( 'Name', 'b2bora-partner-club' ); ?></label></th>
-					<td><input type="text" id="name" name="name" class="regular-text" required value="<?php echo esc_attr( $editing['name'] ?? '' ); ?>" /></td>
+					<th><?php esc_html_e( 'Name', 'b2bora-partner-club' ); ?></th>
+					<td>
+						<?php foreach ( $languages as $lang ) : ?>
+							<p>
+								<label for="name-<?php echo esc_attr( $lang ); ?>"><?php echo count( $languages ) > 1 ? esc_html( strtoupper( $lang ) . ':' ) : ''; ?></label>
+								<input type="text" id="name-<?php echo esc_attr( $lang ); ?>" name="name[<?php echo esc_attr( $lang ); ?>]" class="regular-text" <?php echo 1 === count( $languages ) ? 'required' : ''; ?> value="<?php echo esc_attr( $name_values[ $lang ] ?? '' ); ?>" />
+							</p>
+						<?php endforeach; ?>
+						<?php if ( count( $languages ) > 1 ) : ?>
+							<p class="description"><?php esc_html_e( 'At least one language is required; leave others blank to fall back to the first filled-in language.', 'b2bora-partner-club' ); ?></p>
+						<?php endif; ?>
+					</td>
 				</tr>
 				<tr>
-					<th><label for="description"><?php esc_html_e( 'Description', 'b2bora-partner-club' ); ?></label></th>
-					<td><textarea id="description" name="description" class="large-text" rows="3"><?php echo esc_textarea( $editing['description'] ?? '' ); ?></textarea></td>
+					<th><?php esc_html_e( 'Description', 'b2bora-partner-club' ); ?></th>
+					<td>
+						<?php foreach ( $languages as $lang ) : ?>
+							<p>
+								<label for="description-<?php echo esc_attr( $lang ); ?>"><?php echo count( $languages ) > 1 ? esc_html( strtoupper( $lang ) . ':' ) : ''; ?></label><br />
+								<textarea id="description-<?php echo esc_attr( $lang ); ?>" name="description[<?php echo esc_attr( $lang ); ?>]" class="large-text" rows="3"><?php echo esc_textarea( $desc_values[ $lang ] ?? '' ); ?></textarea>
+							</p>
+						<?php endforeach; ?>
+					</td>
 				</tr>
 				<tr>
 					<th><label for="points_cost"><?php esc_html_e( 'Points Cost', 'b2bora-partner-club' ); ?></label></th>
@@ -151,7 +171,7 @@ $base_url     = admin_url( 'admin.php?page=b2bora-pc-rewards' );
 			<?php else : ?>
 				<?php foreach ( $rewards as $reward ) : ?>
 					<tr>
-						<td><?php echo esc_html( $reward['name'] ); ?></td>
+						<td><?php echo esc_html( B2Bora_PC_Multilang::decode( $reward['name'] ) ); ?></td>
 						<td><?php echo esc_html( $types[ $reward['reward_type'] ] ?? $reward['reward_type'] ); ?></td>
 						<td><?php echo esc_html( number_format_i18n( (int) $reward['points_cost'] ) ); ?></td>
 						<td><?php echo esc_html( $reward['reward_value'] ); ?></td>

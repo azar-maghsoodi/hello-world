@@ -557,3 +557,98 @@ function test_woocommerce_absence_is_guarded_before_boot() {
 	$orders_source = file_get_contents( B2BORA_PC_PATH . 'includes/class-orders.php' );
 	assert_true( false !== strpos( $orders_source, "function_exists( 'wc_get_order' )" ), 'order handler guards against WooCommerce functions being undefined' );
 }
+
+// ---------------------------------------------------------------------
+// Multilang: per-language storage for admin-entered reward/level/
+// mission content (JSON-in-existing-column, no schema change).
+// ---------------------------------------------------------------------
+function test_multilang_single_language_is_stored_as_plain_string() {
+	$encoded = B2Bora_PC_Multilang::encode( array( 'en' => 'Gold Level' ) );
+	assert_equal( 'Gold Level', $encoded, 'a single language is stored with no JSON overhead' );
+}
+
+function test_multilang_multiple_languages_round_trip() {
+	$encoded = B2Bora_PC_Multilang::encode(
+		array(
+			'en' => 'Gold Level',
+			'ro' => 'Nivel Auriu',
+		)
+	);
+	assert_true( 'Gold Level' !== $encoded, 'two or more languages are stored as JSON, not a plain string' );
+	assert_equal( 'Gold Level', B2Bora_PC_Multilang::decode( $encoded, 'en' ), 'decode returns the requested language' );
+	assert_equal( 'Nivel Auriu', B2Bora_PC_Multilang::decode( $encoded, 'ro' ), 'decode returns the other requested language' );
+}
+
+function test_multilang_decode_falls_back_to_first_language_when_missing() {
+	$encoded = B2Bora_PC_Multilang::encode(
+		array(
+			'en' => 'Gold Level',
+			'ro' => 'Nivel Auriu',
+		)
+	);
+	assert_equal( 'Gold Level', B2Bora_PC_Multilang::decode( $encoded, 'fr' ), 'an unsaved language falls back to the first available one' );
+}
+
+function test_multilang_decode_is_backward_compatible_with_legacy_plain_strings() {
+	assert_equal( 'Gold Level', B2Bora_PC_Multilang::decode( 'Gold Level', 'ro' ), 'a legacy plain-text value is returned unchanged for any language' );
+	assert_equal( '', B2Bora_PC_Multilang::decode( '' ), 'an empty value decodes to an empty string' );
+}
+
+function test_multilang_get_all_wraps_legacy_strings_under_current_language() {
+	assert_equal( array( 'en' => 'Gold Level' ), B2Bora_PC_Multilang::get_all( 'Gold Level' ), 'a legacy plain-text value is wrapped under the current language when pre-filling an edit form' );
+	assert_equal( array(), B2Bora_PC_Multilang::get_all( '' ), 'an empty value has no languages' );
+
+	$encoded = B2Bora_PC_Multilang::encode(
+		array(
+			'en' => 'Gold Level',
+			'ro' => 'Nivel Auriu',
+		)
+	);
+	assert_equal(
+		array(
+			'en' => 'Gold Level',
+			'ro' => 'Nivel Auriu',
+		),
+		B2Bora_PC_Multilang::get_all( $encoded ),
+		'get_all returns every saved language for a JSON-encoded value'
+	);
+}
+
+function test_multilang_sanitize_input_accepts_flat_string_or_per_language_array() {
+	assert_equal( 'Gold Level', B2Bora_PC_Multilang::sanitize_input( '  Gold Level  ', 'sanitize_text_field' ), 'a flat string is run through the given sanitizer' );
+
+	$encoded = B2Bora_PC_Multilang::sanitize_input(
+		array(
+			'en' => '  Gold Level  ',
+			'ro' => '  Nivel Auriu  ',
+		),
+		'sanitize_text_field'
+	);
+	assert_equal( 'Gold Level', B2Bora_PC_Multilang::decode( $encoded, 'en' ), 'each array entry is sanitized before encoding (en)' );
+	assert_equal( 'Nivel Auriu', B2Bora_PC_Multilang::decode( $encoded, 'ro' ), 'each array entry is sanitized before encoding (ro)' );
+
+	$single = B2Bora_PC_Multilang::sanitize_input( array( 'en' => 'Gold Level', 'ro' => '' ), 'sanitize_text_field' );
+	assert_equal( 'Gold Level', $single, 'blank per-language entries are dropped, collapsing back to a plain string when only one remains' );
+}
+
+function test_multilang_content_is_translated_through_the_dashboard() {
+	b2bora_test_register_user( 1 );
+
+	$reward_id = B2Bora_PC_Rewards::save_reward(
+		array(
+			'name'         => array(
+				'en' => 'Free Shipping',
+				'ro' => 'Transport Gratuit',
+			),
+			'points_cost'  => 100,
+			'reward_type'  => B2Bora_PC_Rewards::TYPE_ORDER_CREDIT,
+			'reward_value' => 5,
+			'active'       => 1,
+		)
+	);
+	assert_true( false !== $reward_id, 'reward with per-language name saves successfully' );
+
+	$reward = B2Bora_PC_Rewards::get_reward( $reward_id );
+	assert_equal( 'Free Shipping', B2Bora_PC_Multilang::decode( $reward['name'], 'en' ), 'stored reward name decodes correctly for en' );
+	assert_equal( 'Transport Gratuit', B2Bora_PC_Multilang::decode( $reward['name'], 'ro' ), 'stored reward name decodes correctly for ro' );
+}
