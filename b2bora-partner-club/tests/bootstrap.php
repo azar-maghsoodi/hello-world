@@ -473,6 +473,7 @@ define( 'B2BORA_PC_VERSION', 'test' );
 require_once B2BORA_PC_PATH . 'includes/class-security.php';
 require_once B2BORA_PC_PATH . 'includes/class-logger.php';
 require_once B2BORA_PC_PATH . 'includes/class-settings.php';
+require_once B2BORA_PC_PATH . 'includes/class-translations.php';
 require_once B2BORA_PC_PATH . 'includes/class-database.php';
 require_once B2BORA_PC_PATH . 'includes/class-points.php';
 require_once B2BORA_PC_PATH . 'includes/class-levels.php';

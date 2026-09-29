@@ -285,6 +285,27 @@ function test_negative_balance_is_never_allowed() {
 }
 
 // ---------------------------------------------------------------------
+// Per-language dashboard translations.
+// ---------------------------------------------------------------------
+function test_translations_default_and_override() {
+	assert_equal( 'Your Points', B2Bora_PC_Translations::get( 'your_points_label', 'ro' ), 'falls back to the English default when no override is saved' );
+
+	B2Bora_PC_Translations::save( 'ro', array( 'your_points_label' => 'Punctele tale', 'redeem_button' => '' ) );
+
+	assert_equal( 'Punctele tale', B2Bora_PC_Translations::get( 'your_points_label', 'ro' ), 'a saved override is returned' );
+	assert_equal( 'Redeem', B2Bora_PC_Translations::get( 'redeem_button', 'ro' ), 'a blank submitted value keeps the default rather than saving an empty override' );
+	assert_equal( 'Your Points', B2Bora_PC_Translations::get( 'your_points_label', 'en' ), 'an override for one language never leaks into another' );
+}
+
+function test_translations_current_language_defaults_to_en_without_polylang() {
+	assert_equal( 'en', B2Bora_PC_Translations::current_language(), 'falls back to en when Polylang is not active' );
+}
+
+function test_translations_unknown_key_returns_empty_string() {
+	assert_equal( '', B2Bora_PC_Translations::get( 'not_a_real_key' ), 'an unknown key returns an empty string rather than erroring' );
+}
+
+// ---------------------------------------------------------------------
 // Points rate ratio (fractional rates without floating point).
 // ---------------------------------------------------------------------
 function test_fractional_points_rate_via_ratio() {

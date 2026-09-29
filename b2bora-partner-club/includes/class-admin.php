@@ -56,6 +56,7 @@ class B2Bora_PC_Admin {
 			'cancel_redemption',
 			'reinstall_tables',
 			'repair_balance',
+			'save_translations',
 		);
 
 		foreach ( $actions as $action ) {
@@ -99,6 +100,7 @@ class B2Bora_PC_Admin {
 			'b2bora-pc-rewards'     => array( __( 'Rewards', 'b2bora-partner-club' ), 'render_rewards' ),
 			'b2bora-pc-levels'      => array( __( 'Levels', 'b2bora-partner-club' ), 'render_levels' ),
 			'b2bora-pc-missions'    => array( __( 'Missions', 'b2bora-partner-club' ), 'render_missions' ),
+			'b2bora-pc-translations' => array( __( 'Translations', 'b2bora-partner-club' ), 'render_translations' ),
 			'b2bora-pc-settings'    => array( __( 'Settings', 'b2bora-partner-club' ), 'render_settings' ),
 			'b2bora-pc-tools'       => array( __( 'Tools', 'b2bora-partner-club' ), 'render_tools' ),
 		);
@@ -166,6 +168,12 @@ class B2Bora_PC_Admin {
 	public static function render_missions() {
 		self::guard();
 		require B2BORA_PC_PATH . 'admin/views/missions.php';
+	}
+
+	/** Render the Translations screen. */
+	public static function render_translations() {
+		self::guard();
+		require B2BORA_PC_PATH . 'admin/views/translations.php';
 	}
 
 	/** Render the Settings screen. */
@@ -286,6 +294,20 @@ class B2Bora_PC_Admin {
 		B2Bora_PC_Missions::save_mission( $data );
 
 		self::redirect( 'b2bora-pc-missions', array( 'updated' => 1 ) );
+	}
+
+	/** Handle saving one language's dashboard translation overrides. */
+	public static function handle_save_translations() {
+		B2Bora_PC_Security::verify_admin_request( 'translations' );
+
+		$language = isset( $_POST['lang'] ) ? sanitize_key( wp_unslash( $_POST['lang'] ) ) : '';
+		$values   = isset( $_POST['strings'] ) && is_array( $_POST['strings'] ) ? wp_unslash( $_POST['strings'] ) : array();
+
+		if ( '' !== $language ) {
+			B2Bora_PC_Translations::save( $language, $values );
+		}
+
+		self::redirect( 'b2bora-pc-translations', array( 'lang' => $language, 'updated' => 1 ) );
 	}
 
 	/** Handle mission deletion. */

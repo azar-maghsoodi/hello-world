@@ -4,6 +4,12 @@
  * Variables ($balance, $progress, $rewards, $history, $missions,
  * $redemptions, $user_id) are set by B2Bora_PC_Shortcodes::render_dashboard().
  *
+ * All visible text goes through B2Bora_PC_Translations::get() rather than
+ * a direct __()/esc_html_e() call, so admins can override any string per
+ * Polylang language from Partner Club -> Translations without editing
+ * code; each lookup still falls back to the built-in English default (and
+ * to a real .mo translation of that default, if one is ever added).
+ *
  * @package B2Bora_Partner_Club
  */
 
@@ -13,15 +19,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $current_level = $progress['current_level'];
 $next_level    = $progress['next_level'];
+
+$t = static function ( $key ) {
+	return B2Bora_PC_Translations::get( $key );
+};
 ?>
-<section class="b2bora-pc-dashboard" aria-label="<?php esc_attr_e( 'B2Bora Partner Club dashboard', 'b2bora-partner-club' ); ?>">
+<section class="b2bora-pc-dashboard" aria-label="<?php echo esc_attr( $t( 'dashboard_aria_label' ) ); ?>">
 	<header class="b2bora-pc-header">
-		<h2 class="b2bora-pc-title"><?php esc_html_e( 'B2Bora Partner Club', 'b2bora-partner-club' ); ?></h2>
+		<h2 class="b2bora-pc-title"><?php echo esc_html( $t( 'dashboard_title' ) ); ?></h2>
 	</header>
 
 	<div class="b2bora-pc-summary">
 		<div class="b2bora-pc-points-card">
-			<span class="b2bora-pc-points-label"><?php esc_html_e( 'Your Points', 'b2bora-partner-club' ); ?></span>
+			<span class="b2bora-pc-points-label"><?php echo esc_html( $t( 'your_points_label' ) ); ?></span>
 			<span class="b2bora-pc-points-value"><?php echo esc_html( number_format_i18n( $balance ) ); ?></span>
 		</div>
 
@@ -30,39 +40,39 @@ $next_level    = $progress['next_level'];
 				<?php
 				echo esc_html(
 					$current_level
-						/* translators: %s: level name */
-						? sprintf( __( '%s Partner', 'b2bora-partner-club' ), $current_level['name'] )
-						: __( 'Partner', 'b2bora-partner-club' )
+						? sprintf( $t( 'level_name_format' ), $current_level['name'] )
+						: $t( 'level_name_fallback' )
 				);
 				?>
 			</span>
 
 			<?php if ( $next_level ) : ?>
-				<div class="b2bora-pc-progress" role="progressbar" aria-valuenow="<?php echo esc_attr( $progress['progress_pct'] ); ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?php esc_attr_e( 'Progress to next level', 'b2bora-partner-club' ); ?>">
+				<div class="b2bora-pc-progress" role="progressbar" aria-valuenow="<?php echo esc_attr( $progress['progress_pct'] ); ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?php echo esc_attr( $t( 'progress_aria_label' ) ); ?>">
 					<div class="b2bora-pc-progress-bar" style="width: <?php echo esc_attr( $progress['progress_pct'] ); ?>%;"></div>
 				</div>
 				<span class="b2bora-pc-progress-text">
 					<?php
-					printf(
-						/* translators: 1: points needed, 2: next level name */
-						esc_html__( '%1$s points to %2$s (%3$s%%)', 'b2bora-partner-club' ),
-						esc_html( number_format_i18n( $progress['points_needed'] ) ),
-						esc_html( $next_level['name'] ),
-						esc_html( $progress['progress_pct'] )
+					echo esc_html(
+						sprintf(
+							$t( 'progress_text_format' ),
+							number_format_i18n( $progress['points_needed'] ),
+							$next_level['name'],
+							$progress['progress_pct']
+						)
 					);
 					?>
 				</span>
 			<?php else : ?>
-				<span class="b2bora-pc-progress-text"><?php esc_html_e( 'You have reached the highest partner level.', 'b2bora-partner-club' ); ?></span>
+				<span class="b2bora-pc-progress-text"><?php echo esc_html( $t( 'max_level_text' ) ); ?></span>
 			<?php endif; ?>
 		</div>
 	</div>
 
 	<section class="b2bora-pc-section" aria-labelledby="b2bora-pc-rewards-heading">
-		<h3 id="b2bora-pc-rewards-heading" class="b2bora-pc-section-title"><?php esc_html_e( 'Available Rewards', 'b2bora-partner-club' ); ?></h3>
+		<h3 id="b2bora-pc-rewards-heading" class="b2bora-pc-section-title"><?php echo esc_html( $t( 'rewards_heading' ) ); ?></h3>
 
 		<?php if ( empty( $rewards ) ) : ?>
-			<p class="b2bora-pc-empty"><?php esc_html_e( 'No rewards are available right now. Check back soon.', 'b2bora-partner-club' ); ?></p>
+			<p class="b2bora-pc-empty"><?php echo esc_html( $t( 'rewards_empty' ) ); ?></p>
 		<?php else : ?>
 			<ul class="b2bora-pc-rewards-list">
 				<?php foreach ( $rewards as $reward ) :
@@ -74,7 +84,7 @@ $next_level    = $progress['next_level'];
 							<?php if ( ! empty( $reward['description'] ) ) : ?>
 								<span class="b2bora-pc-reward-description"><?php echo esc_html( $reward['description'] ); ?></span>
 							<?php endif; ?>
-							<span class="b2bora-pc-reward-cost"><?php echo esc_html( sprintf( /* translators: %s: points cost */ __( '%s points', 'b2bora-partner-club' ), number_format_i18n( (int) $reward['points_cost'] ) ) ); ?></span>
+							<span class="b2bora-pc-reward-cost"><?php echo esc_html( sprintf( $t( 'reward_points_format' ), number_format_i18n( (int) $reward['points_cost'] ) ) ); ?></span>
 						</div>
 						<button
 							type="button"
@@ -82,7 +92,7 @@ $next_level    = $progress['next_level'];
 							data-reward-id="<?php echo esc_attr( $reward['id'] ); ?>"
 							<?php disabled( ! $can_afford ); ?>
 						>
-							<?php esc_html_e( 'Redeem', 'b2bora-partner-club' ); ?>
+							<?php echo esc_html( $t( 'redeem_button' ) ); ?>
 						</button>
 					</li>
 				<?php endforeach; ?>
@@ -91,10 +101,10 @@ $next_level    = $progress['next_level'];
 	</section>
 
 	<section class="b2bora-pc-section" aria-labelledby="b2bora-pc-activity-heading">
-		<h3 id="b2bora-pc-activity-heading" class="b2bora-pc-section-title"><?php esc_html_e( 'Recent Activity', 'b2bora-partner-club' ); ?></h3>
+		<h3 id="b2bora-pc-activity-heading" class="b2bora-pc-section-title"><?php echo esc_html( $t( 'activity_heading' ) ); ?></h3>
 
 		<?php if ( empty( $history ) ) : ?>
-			<p class="b2bora-pc-empty"><?php esc_html_e( 'No activity yet. Your points will appear here once your first order is confirmed.', 'b2bora-partner-club' ); ?></p>
+			<p class="b2bora-pc-empty"><?php echo esc_html( $t( 'activity_empty' ) ); ?></p>
 		<?php else : ?>
 			<ul class="b2bora-pc-activity-list">
 				<?php foreach ( $history as $row ) : ?>
@@ -110,10 +120,10 @@ $next_level    = $progress['next_level'];
 	</section>
 
 	<section class="b2bora-pc-section" aria-labelledby="b2bora-pc-missions-heading">
-		<h3 id="b2bora-pc-missions-heading" class="b2bora-pc-section-title"><?php esc_html_e( 'Missions', 'b2bora-partner-club' ); ?></h3>
+		<h3 id="b2bora-pc-missions-heading" class="b2bora-pc-section-title"><?php echo esc_html( $t( 'missions_heading' ) ); ?></h3>
 
 		<?php if ( empty( $missions ) ) : ?>
-			<p class="b2bora-pc-empty"><?php esc_html_e( 'No active missions right now.', 'b2bora-partner-club' ); ?></p>
+			<p class="b2bora-pc-empty"><?php echo esc_html( $t( 'missions_empty' ) ); ?></p>
 		<?php else : ?>
 			<ul class="b2bora-pc-missions-list">
 				<?php foreach ( $missions as $mission ) :
@@ -130,8 +140,8 @@ $next_level    = $progress['next_level'];
 							<?php
 							echo esc_html(
 								$completed
-									? __( 'Completed', 'b2bora-partner-club' )
-									: sprintf( /* translators: %s: bonus points */ __( '+%s points', 'b2bora-partner-club' ), number_format_i18n( (int) $mission['bonus_points'] ) )
+									? $t( 'mission_completed' )
+									: sprintf( $t( 'mission_bonus_format' ), number_format_i18n( (int) $mission['bonus_points'] ) )
 							);
 							?>
 						</span>
@@ -142,15 +152,15 @@ $next_level    = $progress['next_level'];
 	</section>
 
 	<section class="b2bora-pc-section" aria-labelledby="b2bora-pc-redemptions-heading">
-		<h3 id="b2bora-pc-redemptions-heading" class="b2bora-pc-section-title"><?php esc_html_e( 'Redeemed Rewards', 'b2bora-partner-club' ); ?></h3>
+		<h3 id="b2bora-pc-redemptions-heading" class="b2bora-pc-section-title"><?php echo esc_html( $t( 'redemptions_heading' ) ); ?></h3>
 
 		<?php if ( empty( $redemptions ) ) : ?>
-			<p class="b2bora-pc-empty"><?php esc_html_e( 'You have not redeemed any rewards yet.', 'b2bora-partner-club' ); ?></p>
+			<p class="b2bora-pc-empty"><?php echo esc_html( $t( 'redemptions_empty' ) ); ?></p>
 		<?php else : ?>
 			<ul class="b2bora-pc-redemptions-list">
 				<?php foreach ( $redemptions as $row ) : ?>
 					<li class="b2bora-pc-redemption-item">
-						<span class="b2bora-pc-redemption-name"><?php echo esc_html( $row['reward_name'] ? $row['reward_name'] : __( 'Reward', 'b2bora-partner-club' ) ); ?></span>
+						<span class="b2bora-pc-redemption-name"><?php echo esc_html( $row['reward_name'] ? $row['reward_name'] : $t( 'redemption_reward_fallback' ) ); ?></span>
 						<span class="b2bora-pc-redemption-status b2bora-pc-status-<?php echo esc_attr( $row['status'] ); ?>"><?php echo esc_html( ucfirst( $row['status'] ) ); ?></span>
 					</li>
 				<?php endforeach; ?>

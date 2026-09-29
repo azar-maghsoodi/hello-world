@@ -58,8 +58,8 @@ class B2Bora_PC_Shortcodes {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( B2Bora_PC_Security::NONCE_FRONTEND_ACTION . '_redeem' ),
 				'i18n'    => array(
-					'confirmRedeem' => __( 'Redeem this reward for the points shown?', 'b2bora-partner-club' ),
-					'error'         => __( 'Something went wrong. Please try again.', 'b2bora-partner-club' ),
+					'confirmRedeem' => B2Bora_PC_Translations::get( 'js_confirm_redeem' ),
+					'error'         => B2Bora_PC_Translations::get( 'js_error' ),
 				),
 			)
 		);
@@ -93,8 +93,8 @@ class B2Bora_PC_Shortcodes {
 			ob_start();
 			?>
 			<div class="b2bora-pc-dashboard b2bora-pc-logged-out">
-				<p><?php esc_html_e( 'Please log in to view your B2Bora Partner Club dashboard.', 'b2bora-partner-club' ); ?></p>
-				<a class="b2bora-pc-button" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Log In', 'b2bora-partner-club' ); ?></a>
+				<p><?php echo esc_html( B2Bora_PC_Translations::get( 'logged_out_message' ) ); ?></p>
+				<a class="b2bora-pc-button" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php echo esc_html( B2Bora_PC_Translations::get( 'login_button' ) ); ?></a>
 			</div>
 			<?php
 			return ob_get_clean();

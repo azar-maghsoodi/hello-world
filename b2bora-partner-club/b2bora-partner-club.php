@@ -42,6 +42,7 @@ function b2bora_pc_load_files() {
 		'includes/class-security.php',
 		'includes/class-logger.php',
 		'includes/class-settings.php',
+		'includes/class-translations.php',
 		'includes/class-database.php',
 		'includes/class-points.php',
 		'includes/class-levels.php',
